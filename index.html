@@ -1,632 +1,258 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-key="title">NS-3 & NetAnim Setup Guide</title>
-    <!-- Load Tailwind CSS -->
+    <title>TOEFL Speed-Run | The Fluent Speaker's Guide</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
-    
-    <!-- Custom Tailwind Configuration & JS Setup -->
-    <script>
-        tailwind.config = {
-            darkMode: 'class', // Enable dark mode via the 'dark' class on the HTML tag
-            theme: {
-                extend: {
-                    colors: {
-                        'ns-primary': '#10b981', // Emerald 500
-                        'ns-secondary': '#3b82f6', // Blue 500
-                        'ns-warning': '#f97316', // Orange 500
-                        'dark-bg': '#1f2937',
-                        'dark-card': '#374151',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['Source Code Pro', 'monospace'],
-                    },
-                }
-            }
-        }
-
-        // --- Localization Data ---
-        const dictionary = {
-            en: {
-                title: 'NS-3 & NetAnim Setup Guide (WSL/Ubuntu)',
-                subtitle: 'From WSL Installation to First Simulation Visualization',
-                intro_title: 'Introduction',
-                intro_note_title: 'A Note on Build Systems (CMake vs. Waf)',
-                intro_note_p1: 'This guide uses the modern **CMake** build system (invoked with `./ns3`), which is the standard for recent versions of ns-3. You may find older tutorials using the `./waf` script. Waf is the legacy build system and is no longer used in the main development branch.',
-                intro_p1: 'This guide provides the complete, working command sequence for installing and compiling the **ns-3 Network Simulator** and its graphical animator, **NetAnim**, within a **Windows Subsystem for Linux (WSL) Ubuntu** environment.',
-                intro_p2: 'We use the modern CMake build system for both tools and the standalone NetAnim repository.',
-                phase1_title: 'Phase 1: WSL & System Preparation',
-                p1_1_title: '1.1 Install WSL (Windows)',
-                p1_1_desc: 'Open **Windows PowerShell as Administrator** and run the following command. Reboot your PC after installation.',
-                p1_2_title: '1.2 Update Ubuntu & Install Core Tools',
-                p1_2_desc: 'Open your Ubuntu terminal and install the essential build dependencies.',
-                p1_3_title: '1.3 Troubleshooting: Python Version Fix',
-                p1_3_desc: "If ns-3 configuration fails because the 'python' command is missing or linked incorrectly (common in modern Ubuntu), run this command to create a symlink to Python 3:",
-                p1_4_title: '1.4 Install Python Build Dependencies',
-                p1_4_desc: 'Install Python packages used by the ns-3 build system to prevent configuration warnings.',
-                p1_4_title: '1.4 Install NetAnim Dependencies (Qt5)',
-                p1_4_desc: 'NetAnim requires the Qt 5 toolkit for its graphical interface.',
-                p1_5_title: '1.5 Configure Display for GUI Apps (Crucial!)',
-                p1_5_desc: 'To allow GUI applications from WSL (like NetAnim) to appear on your Windows desktop, you must set the `DISPLAY` environment variable. Add this line to the end of your `~/.bashrc` file.',
-                p1_5_info: 'After saving the file, you must either restart your terminal or run `source ~/.bashrc` for the change to take effect.',
-                phase2_title: 'Phase 2: ns-3 Source Code and Build',
-                p2_1_title: '2.1 Clone and Configure ns-3',
-                p2_2_title: '2.2 Build ns-3',
-                p2_2_desc: '⚠️ This step can take a long time (10-30 minutes), depending on your system.',
-                phase3_title: 'Phase 3: NetAnim Standalone Build',
-                p3_desc: 'NetAnim is built separately due to its external Qt dependency.',
-                p3_1_title: '3.1 Clone and Setup',
-                p3_2_title: '3.2 Configure and Compile',
-                p3_2_output: "// Output will end with: [100%] Built target netanim",
-                phase4_title: 'Phase 4: Run First Simulation (Dumbbell)',
-                p4_1_title: '4.1 Locate and Run Simulation Example',
-                p4_1_desc: 'Use the `dumbbell-animation` example to generate the trace file (`dumbbell.xml`).',
-                p4_1_output: "// Output: Animation Trace file created:dumbbell.xml",
-                p4_2_title: '4.2 Launch NetAnim GUI and Load Trace',
-                p4_2_desc: 'The final step—launching the animator and viewing the results.',
-                p4_2_info: 'The NetAnim window will open. Use the **File -> Open** menu and select **`dumbbell.xml`** from the `ns-3-dev` folder.',
-                phase5_title: 'Phase 5: Writing & Running Your First Custom Simulation',
-                p5_intro: 'The `ns-3` build system automatically compiles any `.cc` files placed in the `~/ns-3-dev/scratch/` directory. This is the perfect place to write your own simulations without modifying the ns-3 source.',
-                p5_1_title: '5.1 Create the C++ Simulation File',
-                p5_1_desc: 'Create a new file named `my-first-sim.cc` inside the `scratch` folder. You can use a terminal-based editor like `nano` (`nano scratch/my-first-sim.cc`) or a graphical editor like VS Code. Paste the following complete example into the file.',
-                p5_1_filename: 'File: `~/ns-3-dev/scratch/my-first-sim.cc`',
-                p5_2_title: '5.2 Build and Run the Simulation',
-                p5_2_desc: 'Now, from the `~/ns-3-dev` directory, use the `ns3 run` command. You refer to the file by its name in the `scratch` folder, without the `.cc` extension. ns-3 will compile and execute it.',
-                p5_2_output: '// Output: Animation Trace file created: my-first-sim.xml',
-                p5_3_title: '5.3 Visualize the Output',
-                p5_3_desc: 'A new animation file, `my-first-sim.xml`, has been generated in your `~/ns-3-dev` directory. Launch NetAnim again and open this new file to see your custom two-node simulation.',
-                footer_text: 'Guide compiled based on successful build commands for ns-3 (CMake) and NetAnim (GitLab standalone repository).',
-                copy_button_text: 'Copy',
-                copy_button_success_text: 'Copied!'
-            },
-            fr: {
-                title: 'Guide d\'installation NS-3 & NetAnim (WSL/Ubuntu)',
-                subtitle: 'De l\'installation WSL à la visualisation de la première simulation',
-                intro_title: 'Introduction',
-                intro_p1: 'Ce guide fournit la séquence complète des commandes de travail pour l\'installation et la compilation du **Simulateur de réseau ns-3** et de son animateur graphique, **NetAnim**, dans un environnement **Windows Subsystem for Linux (WSL) Ubuntu**.',
-                intro_p2: 'Nous utilisons le système de construction moderne CMake pour les deux outils et le référentiel NetAnim autonome.',
-                intro_note_title: 'Note sur les systèmes de construction (CMake vs. Waf)',
-                intro_note_p1: 'Ce guide utilise le système de construction moderne **CMake** (invoqué avec `./ns3`), qui est la norme pour les versions récentes de ns-3. Vous pourriez trouver d\'anciens tutoriels utilisant le script `./waf`. Waf est l\'ancien système de construction et n\'est plus utilisé dans la branche de développement principale.',
-                phase1_title: 'Étape 1 : Préparation WSL et système',
-                p1_1_title: '1.1 Installer WSL (Windows)',
-                p1_1_desc: 'Ouvrez **Windows PowerShell en tant qu\'administrateur** et exécutez la commande suivante. Redémarrez votre PC après l\'installation.',
-                p1_2_title: '1.2 Mettre à jour Ubuntu et installer les outils de base',
-                p1_2_desc: 'Ouvrez votre terminal Ubuntu et installez les dépendances de construction essentielles.',
-                p1_3_title: '1.3 Dépannage : Correction de la version Python',
-                p1_3_desc: "Si la configuration ns-3 échoue car la commande 'python' est manquante ou mal liée (fréquent dans les versions récentes d'Ubuntu), exécutez cette commande pour créer un lien symbolique vers Python 3 :",
-                p1_4_title: '1.4 Installer les dépendances de construction Python',
-                p1_4_desc: 'Installez les paquets Python utilisés par le système de construction ns-3 pour éviter les avertissements de configuration.',
-                p1_4_title: '1.4 Installer les dépendances NetAnim (Qt5)',
-                p1_4_desc: 'NetAnim nécessite la boîte à outils Qt 5 pour son interface graphique.',
-                p1_5_title: '1.5 Configurer l\'affichage pour les applications graphiques (Crucial !)',
-                p1_5_desc: 'Pour permettre aux applications graphiques de WSL (comme NetAnim) d\'apparaître sur votre bureau Windows, vous devez définir la variable d\'environnement `DISPLAY`. Ajoutez cette ligne à la fin de votre fichier `~/.bashrc`.',
-                p1_5_info: 'Après avoir enregistré le fichier, vous devez soit redémarrer votre terminal, soit exécuter `source ~/.bashrc` pour que la modification prenne effet.',
-                phase2_title: 'Étape 2 : Code source et construction ns-3',
-                p2_1_title: '2.1 Cloner et configurer ns-3',
-                p2_2_title: '2.2 Compiler ns-3',
-                p2_2_desc: '⚠️ Cette étape peut prendre beaucoup de temps (10-30 minutes), selon votre système.',
-                phase3_title: 'Étape 3 : Construction autonome de NetAnim',
-                p3_desc: 'NetAnim est construit séparément en raison de sa dépendance externe à Qt.',
-                p3_1_title: '3.1 Cloner et configurer',
-                p3_2_title: '3.2 Configurer et compiler',
-                p3_2_output: "// La sortie se terminera par : [100%] Built target netanim",
-                phase4_title: 'Étape 4 : Exécuter la première simulation (Dumbbell)',
-                p4_1_title: '4.1 Localiser et exécuter l\'exemple de simulation',
-                p4_1_desc: 'Utilisez l\'exemple `dumbbell-animation` pour générer le fichier de trace (`dumbbell.xml`).',
-                p4_1_output: "// Sortie : Fichier de trace d'animation créé:dumbbell.xml",
-                p4_2_title: '4.2 Lancer l\'interface graphique NetAnim et charger la trace',
-                p4_2_desc: 'L\'étape finale : lancer l\'animateur et visualiser les résultats.',
-                p4_2_info: 'La fenêtre NetAnim s\'ouvrira. Utilisez le menu **Fichier -> Ouvrir** et sélectionnez **`dumbbell.xml`** depuis le dossier `ns-3-dev`.',
-                phase5_title: 'Étape 5 : Écrire et exécuter votre première simulation personnalisée',
-                p5_intro: 'Le système de construction `ns-3` compile automatiquement tout fichier `.cc` placé dans le répertoire `~/ns-3-dev/scratch/`. C\'est l\'endroit idéal pour écrire vos propres simulations sans modifier le code source de ns-3.',
-                p5_1_title: '5.1 Créer le fichier de simulation C++',
-                p5_1_desc: 'Créez un nouveau fichier nommé `my-first-sim.cc` dans le dossier `scratch`. Vous pouvez utiliser un éditeur de terminal comme `nano` (`nano scratch/my-first-sim.cc`) ou un éditeur graphique comme VS Code. Collez l\'exemple complet suivant dans le fichier.',
-                p5_1_filename: 'Fichier : `~/ns-3-dev/scratch/my-first-sim.cc`',
-                p5_2_title: '5.2 Construire et exécuter la simulation',
-                p5_2_desc: 'Maintenant, depuis le répertoire `~/ns-3-dev`, utilisez la commande `ns3 run`. Vous faites référence au fichier par son nom dans le dossier `scratch`, sans l\'extension `.cc`. ns-3 le compilera et l\'exécutera.',
-                p5_2_output: '// Sortie : Fichier de trace d\'animation créé : my-first-sim.xml',
-                p5_3_title: '5.3 Visualiser le résultat',
-                p5_3_desc: 'Un nouveau fichier d\'animation, `my-first-sim.xml`, a été généré dans votre répertoire `~/ns-3-dev`. Lancez à nouveau NetAnim et ouvrez ce nouveau fichier pour voir votre simulation personnalisée à deux nœuds.',
-                footer_text: 'Guide compilé sur la base des commandes de construction réussies pour ns-3 (CMake) et NetAnim (référentiel autonome GitLab).',
-                copy_button_text: 'Copier',
-                copy_button_success_text: 'Copié !'
-            }
-        };
-
-        // --- Theme Logic ---
-        function setInitialTheme() {
-            const storedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            let currentTheme = 'light';
-
-            if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
-                currentTheme = 'dark';
-            }
-            
-            if (currentTheme === 'dark') {
-                document.documentElement.classList.add('dark');
-            }
-        }
-        
-        function toggleTheme() {
-            const isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            updateThemeIcon(isDark);
-        }
-
-        function updateThemeIcon(isDark) {
-            const icon = document.getElementById('theme-toggle-icon');
-            if (icon) {
-                // Moon icon for light mode (click to go dark)
-                // Sun icon for dark mode (click to go light)
-                icon.innerHTML = isDark 
-                    ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM13 5v4h4v-4zM7 5v4H3V5zM17 19v-4h4v4zM7 19v-4H3v4zM12 12c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>' // Placeholder sun/starry icon
-                    : '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.05-.92-.12-1.36-.98 1.48-2.58 2.36-4.27 2.36-2.73 0-5.18-1.57-6.26-4C5.07 9.87 5 9.44 5 9c0-3.86 3.14-7 7-7zm7.53 10.99c-.8-.22-1.6-.33-2.4-.33-4.42 0-8 3.58-8 8s3.58 8 8 8 8-3.58 8-8c0-.98-.18-1.95-.53-2.88z"/></svg>'; // Placeholder moon/brightness icon
-            }
-        }
-
-        // --- Language Logic ---
-        let currentLang = localStorage.getItem('lang') || 'en';
-
-        function applyLanguage(lang) {
-            document.querySelectorAll('[data-key]').forEach(element => {
-                const key = element.getAttribute('data-key');
-                const text = dictionary[lang][key];
-
-                if (element.hasAttribute('data-html')) {
-                    element.innerHTML = text;
-                } else {
-                    element.textContent = text;
-                }
-            });
-            // Update button text
-            document.getElementById('lang-toggle-btn').textContent = lang === 'en' ? 'Français' : 'English';
-        }
-
-        function toggleLanguage() {
-            currentLang = currentLang === 'en' ? 'fr' : 'en';
-            localStorage.setItem('lang', currentLang);
-            applyLanguage(currentLang);
-        }
-
-        // --- Copy to Clipboard Logic ---
-        function initializeCopyButtons() {
-            const codeBlocks = document.querySelectorAll('.code-block, .cpp-code-block');
-            codeBlocks.forEach(block => {
-                // Don't add copy buttons to blocks that are just for showing output
-                if (block.querySelector('.terminal-output')) return;
-
-                const copyButton = document.createElement('button');
-                copyButton.className = 'copy-btn';
-                copyButton.setAttribute('data-key', 'copy_button_text');
-                copyButton.textContent = dictionary[currentLang]['copy_button_text'];
-
-                block.style.position = 'relative';
-                block.appendChild(copyButton);
-
-                copyButton.addEventListener('click', () => {
-                    // Use a clone to get the text content without the copy button
-                    const blockClone = block.cloneNode(true);
-                    blockClone.querySelector('.copy-btn').remove();
-                    
-                    // innerText correctly interprets <br> as newlines, matching user selection behavior
-                    const text = blockClone.innerText.trim();
-
-                    // --- Robust Clipboard Logic ---
-                    // Use modern clipboard API if available and in a secure context
-                    if (navigator.clipboard && window.isSecureContext) {
-                        navigator.clipboard.writeText(text).then(() => {
-                            showCopySuccess(copyButton);
-                        }).catch(err => {
-                            console.error('Modern clipboard API failed:', err);
-                            fallbackCopyTextToClipboard(text, copyButton); // Try fallback
-                        });
-                    } else {
-                        // Fallback for insecure contexts (like file://) or older browsers
-                        fallbackCopyTextToClipboard(text, copyButton);
-                    }
-                });
-            });
-        }
-
-        function showCopySuccess(button) {
-            button.textContent = dictionary[currentLang]['copy_button_success_text'];
-            button.classList.add('copied');
-            setTimeout(() => {
-                button.textContent = dictionary[currentLang]['copy_button_text'];
-                button.classList.remove('copied');
-            }, 2000);
-        }
-
-        function fallbackCopyTextToClipboard(text, button) {
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand("copy");
-            document.body.removeChild(textArea);
-            showCopySuccess(button);
-        }
-
-        // --- Page Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            setInitialTheme();
-            applyLanguage(currentLang);
-            updateThemeIcon(document.documentElement.classList.contains('dark'));
-            initializeCopyButtons();
-
-            document.getElementById('lang-toggle-btn').addEventListener('click', toggleLanguage);
-            document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
-        });
-    </script>
-    <!-- Custom Styles for Code Blocks -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .code-block {
-            background-color: #f3f4f6;
-            color: #1f2937;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            font-family: 'Source Code Pro', monospace;
-            font-size: 0.875rem;
-            line-height: 1.5;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-            position: relative; /* For copy button positioning */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        .copy-btn {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            background-color: #e5e7eb; /* gray-200 */
-            color: #374151; /* gray-700 */
-            border: none;
-            padding: 0.25rem 0.75rem;
-            border-radius: 0.375rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.2s ease-in-out;
+        .gradient-text {
+            background: linear-gradient(to right, #2563eb, #9333ea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .code-block:hover .copy-btn {
-            opacity: 1;
-        }
-        .dark .code-block {
-            background-color: #374151;
-            color: #d1d5db;
-        }
-        .step-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
-        }
-        .step-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-        }
-        .dark .step-card {
-             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-        }
-        .dark .copy-btn {
-            background-color: #4b5563; /* gray-600 */
-            color: #d1d5db; /* gray-300 */
-        }
-        .copy-btn.copied {
-            background-color: #10b981; /* ns-primary / emerald-500 */
-            color: white;
-        }
-        .dark .copy-btn.copied {
-            background-color: #10b981;
-            color: white;
-        }
-        .terminal-prompt {
-            color: #059669; /* Green for prompt */
-            font-weight: bold;
-        }
-        .dark .terminal-prompt {
-             color: #6ee7b7; /* Lighter green in dark mode */
-        }
-        .cpp-code-block {
-            border-left: 4px solid var(--tw-ns-red); /* Uses primary color from Tailwind */
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            font-family: 'Source Code Pro', monospace;
-            font-size: 0.875rem;
-            line-height: 1.5;
-            white-space: pre-wrap;
+        .template-box {
+            border-left: 4px solid #2563eb;
+            background-color: #f8fafc;
         }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-dark-bg text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
+<body class="bg-slate-50 text-slate-800">
 
-    <!-- Header & Controls -->
-    <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-10 transition-colors duration-300">
-        <div class="max-w-6xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <div>
-                <h1 data-key="title" class="text-2xl font-bold tracking-tight text-ns-secondary dark:text-ns-primary">NS-3 & NetAnim Setup Guide</h1>
-            </div>
-            <div class="flex space-x-3">
-                <!-- Language Toggle -->
-                <button id="lang-toggle-btn" class="py-2 px-3 text-sm font-medium rounded-lg text-white bg-ns-secondary hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                    Français
-                </button>
-                <!-- Theme Toggle -->
-                <button id="theme-toggle-btn" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-                    <span id="theme-toggle-icon" class="h-6 w-6">
-                        <!-- Icon will be set by JS -->
-                    </span>
-                </button>
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="font-bold text-xl tracking-tight">TOEFL<span class="text-blue-600">SpeedRun</span> 🇨🇲</div>
+            <div class="text-sm text-slate-500 font-medium hidden sm:block">Target: 110+</div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-white border-b border-slate-200">
+        <div class="max-w-4xl mx-auto px-4 py-12 text-center">
+            <span class="inline-block py-1 px-3 rounded-full bg-blue-100 text-blue-700 text-xs font-bold tracking-wide mb-4 uppercase">For Fluent Speakers Only</span>
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-4 text-slate-900">Don't Study English.<br><span class="gradient-text">Study The Game.</span></h1>
+            <p class="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                You are already fluent. Your biggest enemy isn't vocabulary—it's the clock. This is your 14-day crash course to beating the format without wasting time on grammar.
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <a href="#plan" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition shadow-lg shadow-blue-500/30">Start 14-Day Plan</a>
+                <a href="#templates" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold py-3 px-6 rounded-lg transition">View Templates</a>
             </div>
         </div>
-    </header>
+    </div>
 
-    <!-- Main Content -->
-    <main class="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto px-4 py-8 space-y-12">
 
-        <!-- Subtitle -->
-        <p data-key="subtitle" class="text-xl text-gray-600 dark:text-gray-400 mb-10 text-center font-light">From WSL Installation to First Simulation Visualization</p>
-
-        <div class="space-y-16">
-            <!-- Introduction -->
-            <section class="p-8 bg-white dark:bg-gray-700 rounded-xl shadow-lg border-l-4 border-ns-primary transition-colors duration-300">
-                <h2 data-key="intro_title" class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">Introduction</h2>
-                <div class="space-y-3 text-gray-600 dark:text-gray-300">
-                    <p data-key="intro_p1" data-html="true"></p>
-                    <p data-key="intro_p2"></p>
-                    <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-400 rounded-r-lg">
-                        <h4 data-key="intro_note_title" class="font-semibold text-blue-800 dark:text-blue-300"></h4>
-                        <p data-key="intro_note_p1" data-html="true" class="text-sm text-blue-700 dark:text-blue-300/90 mt-1"></p>
-                    </div>
+        <!-- The Warning -->
+        <section class="bg-red-50 border border-red-100 rounded-2xl p-6 sm:p-8">
+            <div class="flex items-start gap-4">
+                <div class="bg-red-100 p-3 rounded-full text-red-600 shrink-0">
+                    <i class="fas fa-exclamation-triangle text-xl"></i>
                 </div>
-            </section>
-
-            <!-- Phase 1: WSL and System Preparation -->
-            <section>
-                <h2 data-key="phase1_title" class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 border-b border-gray-300 dark:border-gray-600 pb-4"></h2>
-                <div class="grid lg:grid-cols-2 gap-8 items-start">
-                    <!-- 1.1 Install WSL --> 
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-primary shadow-lg">
-                        <p data-key="p1_1_title" class="text-xl font-semibold text-ns-secondary dark:text-ns-primary"></p>
-                        <p data-key="p1_1_desc" class="text-gray-600 dark:text-gray-300 mt-2"></p>
-                        <div class="code-block mt-4">
-                            <span class="terminal-prompt">PS C:\Users\user></span> wsl --install
-                        </div>
-                    </div>
-
-                    <!-- 1.2 Update Ubuntu & Install Core Tools -->
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-primary shadow-lg">
-                        <p data-key="p1_2_title" class="text-xl font-semibold text-ns-secondary dark:text-ns-primary"></p>
-                        <p data-key="p1_2_desc" class="text-gray-600 dark:text-gray-300 mt-2"></p>
-                        <div class="code-block mt-4">
-                            <span class="terminal-prompt">$</span> sudo apt update && sudo apt upgrade -y<br>
-                            <span class="terminal-prompt">$</span> sudo apt install git mercurial python3 python3-pip cmake g++ pkg-config
-                        </div>
-                    </div>
-
-                    <!-- 1.3 Python Troubleshooting -->
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-warning shadow-lg">
-                        <p data-key="p1_3_title" class="text-xl font-semibold text-ns-warning flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 13c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1s1 .45 1 1v4c0 .55-.45 1-1 1zm1-8h-2V7h2v2z"/></svg>
-                        </p>
-                        <p data-key="p1_3_desc" class="text-gray-600 dark:text-gray-300 mt-2"></p>
-                        <div class="code-block mt-4 bg-yellow-100 dark:bg-orange-900 text-gray-900 dark:text-gray-100 border-l-4 border-ns-warning">
-                            <span class="terminal-prompt text-ns-warning font-bold">$</span> sudo ln -s /usr/bin/python3 /usr/bin/python
-                        </div>
-                    </div>
-                    
-                    <!-- 1.4 Install Python Dependencies -->
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-primary shadow-lg">
-                        <p data-key="p1_4_title" class="text-xl font-semibold text-ns-secondary dark:text-ns-primary"></p>
-                        <p data-key="p1_4_desc" class="text-gray-600 dark:text-gray-300 mt-2"></p>
-                        <div class="code-block mt-4">
-                            <span class="terminal-prompt">$</span> pip install cmake_format pyyaml
-                        </div>
-                    </div>
-
-                    <!-- 1.5 Install Qt5 -->
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-primary shadow-lg">
-                        <p data-key="p1_4_title" class="text-xl font-semibold text-ns-secondary dark:text-ns-primary"></p>
-                        <p data-key="p1_4_desc" class="text-gray-600 dark:text-gray-300 mt-2"></p>
-                        <div class="code-block mt-4">
-                            <span class="terminal-prompt">$</span> sudo apt install qtbase5-dev qt5-qmake
-                        </div>
-                    </div>
-
-                    <!-- 1.6 Configure Display -->
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-warning shadow-lg lg:col-span-2">
-                        <p data-key="p1_5_title" class="text-xl font-semibold text-ns-warning flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 13c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1s1 .45 1 1v4c0 .55-.45 1-1 1zm1-8h-2V7h2v2z"/></svg>
-                        </p>
-                        <p data-key="p1_5_desc" class="text-gray-600 dark:text-gray-300 mt-2"></p>
-                        <div class="code-block mt-4 bg-yellow-100 dark:bg-orange-900 text-gray-900 dark:text-gray-100 border-l-4 border-ns-warning">
-                            <span class="terminal-prompt text-ns-warning font-bold">$</span> echo 'export DISPLAY=$(cat /etc/resolv.conf | grep nameserver | awk \'{print $2}\'):0.0' >> ~/.bashrc
-                        </div>
-                        <p data-key="p1_5_info" data-html="true" class="mt-3 text-sm text-gray-700 dark:text-gray-300"></p>
-                    </div>
+                <div>
+                    <h2 class="text-xl font-bold text-red-800 mb-2">The "Native Speaker Trap"</h2>
+                    <p class="text-red-700 mb-4">
+                        Fluent speakers fail because they treat the test like a casual conversation. 
+                    </p>
+                    <ul class="list-disc list-inside text-red-700 space-y-1 text-sm sm:text-base">
+                        <li><strong>DO NOT</strong> be creative. Be boring. Be predictable.</li>
+                        <li><strong>DO NOT</strong> say "Umm" or "Uh." Silence is better than fillers.</li>
+                        <li><strong>DO NOT</strong> give your opinion unless specifically asked (Task 1 only).</li>
+                        <li><strong>Spelling:</strong> Pick ONE style (US or UK) and stick to it. Don't mix <em>Colour</em> and <em>Center</em>.</li>
+                    </ul>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <!-- Phase 2: ns-3 Source Code and Build -->
-            <section>
-                <h2 data-key="phase2_title" class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 border-b border-gray-300 dark:border-gray-600 pb-4"></h2>
-                <div class="grid lg:grid-cols-2 gap-8">
-                    <!-- 2.1 Clone and Configure ns-3 -->
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-secondary shadow-lg">
-                        <p data-key="p2_1_title" class="text-xl font-semibold text-ns-secondary dark:text-ns-primary"></p>
-                        <div class="code-block mt-4">
-                            <span class="terminal-prompt">$</span> git clone https://gitlab.com/nsnam/ns-3-dev.git<br>
-                            <span class="terminal-prompt">$</span> cd ns-3-dev<br>
-                            <span class="terminal-prompt">$</span> git checkout ns-3.41 <span class="text-gray-400 dark:text-gray-500"># Checkout the latest stable release</span><br>
-                            <span class="terminal-prompt">$</span> ./ns3 configure --enable-examples --enable-tests --build-profile=debug
+        <!-- The Plan -->
+        <section id="plan">
+            <div class="flex items-center gap-3 mb-6">
+                <i class="fas fa-calendar-alt text-blue-600 text-2xl"></i>
+                <h2 class="text-3xl font-bold text-slate-900">The 14-Day Schedule</h2>
+            </div>
+
+            <div class="grid gap-6 md:grid-cols-2">
+                <!-- Phase 1 -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-bl-lg">DAYS 1-3</div>
+                    <h3 class="text-xl font-bold mb-4 text-slate-800">Phase 1: The Wake-Up Call</h3>
+                    <div class="space-y-4">
+                        <div class="flex gap-3">
+                            <div class="font-mono font-bold text-blue-600 shrink-0 w-12">Day 1</div>
+                            <div>
+                                <p class="font-semibold">Diagnostic Test</p>
+                                <p class="text-sm text-slate-600">Take the free ETS test. Don't worry about the score. Feel the weirdness of the timer.</p>
+                                <a href="https://www.ets.org/toefl/test-takers/ibt/prepare/toefl-testready.html" target="_blank" class="text-blue-600 text-xs font-bold hover:underline mt-1 inline-block">Open Diagnostic &rarr;</a>
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- 2.2 Build ns-3 -->
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-secondary shadow-lg">
-                        <p data-key="p2_2_title" class="text-xl font-semibold text-ns-secondary dark:text-ns-primary"></p>
-                        <p data-key="p2_2_desc" class="text-red-500 dark:text-red-400 mt-2 font-bold"></p>
-                        <div class="code-block mt-4">
-                            <span class="terminal-prompt">$</span> ./ns3 build
+                        <div class="flex gap-3">
+                            <div class="font-mono font-bold text-blue-600 shrink-0 w-12">Day 2</div>
+                            <div>
+                                <p class="font-semibold">Speaking Task 1 Drill</p>
+                                <p class="text-sm text-slate-600">Record yourself answering "Do you prefer books or movies?". Speak for <strong>exactly 45s</strong>.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="font-mono font-bold text-blue-600 shrink-0 w-12">Day 3</div>
+                            <div>
+                                <p class="font-semibold">Memorize Templates</p>
+                                <p class="text-sm text-slate-600">Scroll down and memorize the "Cheat Codes". Do not change them.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </section>
 
-            <!-- Phase 3: NetAnim Standalone Build -->
-            <section>
-                <h2 data-key="phase3_title" class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 border-b border-gray-300 dark:border-gray-600 pb-4"></h2>
-                <p data-key="p3_desc" class="text-gray-600 dark:text-gray-300 mb-4"></p>
-                <div class="grid lg:grid-cols-2 gap-8">
-                    <!-- 3.1 Clone and Setup -->
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-primary shadow-lg">
-                        <p data-key="p3_1_title" class="text-xl font-semibold text-ns-secondary dark:text-ns-primary"></p>
-                        <div class="code-block mt-4">
-                            <span class="terminal-prompt">~/ns-3-dev$</span> git clone https://gitlab.com/nsnam/netanim.git<br>
-                            <span class="terminal-prompt">~/ns-3-dev$</span> cd netanim<br>
-                            <span class="terminal-prompt">~/ns-3-dev/netanim$</span> mkdir build && cd build
+                <!-- Phase 2 -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-purple-100 text-purple-800 text-xs font-bold px-3 py-1 rounded-bl-lg">DAYS 4-7</div>
+                    <h3 class="text-xl font-bold mb-4 text-slate-800">Phase 2: The New Tasks</h3>
+                    <div class="space-y-4">
+                        <div class="flex gap-3">
+                            <div class="font-mono font-bold text-purple-600 shrink-0 w-12">Day 4</div>
+                            <div>
+                                <p class="font-semibold">Writing: Integrated Task</p>
+                                <p class="text-sm text-slate-600">Read a text, listen to a lecture, write a summary. <strong>No opinions allowed.</strong></p>
+                            </div>
                         </div>
-                    </div>
-                    <!-- 3.2 Configure and Compile -->
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-primary shadow-lg">
-                        <p data-key="p3_2_title" class="text-xl font-semibold text-ns-secondary dark:text-ns-primary"></p>
-                        <div class="code-block mt-4">
-                            <span class="terminal-prompt">~/ns-3-dev/netanim/build$</span> cmake ..<br>
-                            <span class="terminal-prompt">~/ns-3-dev/netanim/build$</span> make
-                            <div data-key="p3_2_output" class="terminal-output mt-2 text-sm"></div>
+                        <div class="flex gap-3">
+                            <div class="font-mono font-bold text-purple-600 shrink-0 w-12">Day 5</div>
+                            <div>
+                                <p class="font-semibold">Writing: Academic Discussion</p>
+                                <p class="text-sm text-slate-600"><strong>NEW TASK!</strong> Respond to a professor and 2 students in 10 minutes.</p>
+                                <a href="https://www.youtube.com/watch?v=_Hd3IwnOEfs" target="_blank" class="text-purple-600 text-xs font-bold hover:underline mt-1 inline-block">Watch Strategy Video &rarr;</a>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Phase 4: Initial Run -->
-            <section>
-                <h2 data-key="phase4_title" class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 border-b border-gray-300 dark:border-gray-600 pb-4"></h2>
-                <div class="grid lg:grid-cols-2 gap-8">
-                    <!-- 4.1 Run Example -->
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-secondary shadow-lg">
-                        <p data-key="p4_1_title" class="text-xl font-semibold text-ns-secondary dark:text-ns-primary"></p>
-                        <p data-key="p4_1_desc" class="text-gray-600 dark:text-gray-300 mt-2"></p>
-                        <div class="code-block mt-4">
-                            <span class="terminal-prompt">$</span> cd ~/ns-3-dev<br>
-                            <span class="terminal-prompt">$</span> ./ns3 run "dumbbell-animation --animFile=dumbbell.xml"<br>
-                            <div data-key="p4_1_output" class="terminal-output mt-2 text-sm"></div>
-                        </div>
-                    </div>
-                    <!-- 4.2 Launch NetAnim -->
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-secondary shadow-lg">
-                        <p data-key="p4_2_title" class="text-xl font-semibold text-ns-secondary dark:text-ns-primary"></p>
-                        <p data-key="p4_2_desc" class="text-gray-600 dark:text-gray-300 mt-2"></p>
-                        <div class="code-block mt-4">
-                            <span class="terminal-prompt">$</span> ./netanim/build/NetAnim
-                        </div>
-                        <p data-key="p4_2_info" data-html="true" class="mt-4 text-gray-700 dark:text-gray-300"></p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Phase 5: Custom Simulations -->
-            <section>
-                <h2 data-key="phase5_title" class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 border-b border-gray-300 dark:border-gray-600 pb-4"></h2>
-                <p data-key="p5_intro" class="text-gray-600 dark:text-gray-300 mb-10"></p>
-
-                <div class="space-y-12">
-                    <!-- 5.1 Create the File -->
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-primary shadow-lg">
-                        <h3 data-key="p5_1_title" class="text-2xl font-semibold text-ns-secondary dark:text-ns-primary"></h3>
-                        <p data-key="p5_1_desc" class="text-gray-600 dark:text-gray-300 mt-2 mb-4"></p>
-                        <p data-key="p5_1_filename" class="font-mono text-sm bg-gray-200 dark:bg-gray-900 p-2 rounded-md inline-block mb-4"></p>
-                        <div class="cpp-code-block code-block bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-300 transition-colors duration-300">
-<pre>
-#include "ns3/core-module.h"
-#include "ns3/network-module.h"
-#include "ns3/internet-module.h"
-#include "ns3/point-to-point-module.h"
-#include "ns3/applications-module.h"
-#include "ns3/mobility-module.h"
-#include "ns3/netanim-module.h"
-
-using namespace ns3;
-
-int main(int argc, char* argv[])
-{
-    // Create two nodes
-    NodeContainer nodes;
-    nodes.Create(2);
-
-    // Create a point-to-point link
-    PointToPointHelper pointToPoint;
-    pointToPoint.SetDeviceAttribute("DataRate", StringValue("5Mbps"));
-    pointToPoint.SetChannelAttribute("Delay", StringValue("2ms"));
-
-    NetDeviceContainer devices;
-    devices = pointToPoint.Install(nodes);
-
-    // Install the internet stack (TCP/IP)
-    InternetStackHelper stack;
-    stack.Install(nodes);
-
-    // Assign IP addresses
-    Ipv4AddressHelper address;
-    address.SetBase("10.1.1.0", "255.255.255.0");
-    Ipv4InterfaceContainer interfaces = address.Assign(devices);
-
-    // --- Set node positions for NetAnim ---
-    MobilityHelper mobility;
-    mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
-    mobility.Install(nodes);
-
-    // Place nodes manually
-    Ptr<Node> n0 = nodes.Get(0);
-    Ptr<Node> n1 = nodes.Get(1);
-    Ptr<MobilityModel> mob0 = n0->GetObject<MobilityModel>();
-    Ptr<MobilityModel> mob1 = n1->GetObject<MobilityModel>();
-    mob0->SetPosition(Vector(0.0, 0.0, 0.0));
-    mob1->SetPosition(Vector(50.0, 0.0, 0.0));
-
-    // --- Instantiate the animation interface ---
-    AnimationInterface anim("my-first-sim.xml");
-
-    // Run the simulation
-    Simulator::Run();
-    Simulator::Destroy();
-    return 0;
-}
-</pre>
-                        </div>
-                    </div>
-
-                    <!-- 5.2 Build and Run -->
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-primary shadow-lg">
-                        <h3 data-key="p5_2_title" class="text-2xl font-semibold text-ns-secondary dark:text-ns-primary"></h3>
-                        <p data-key="p5_2_desc" class="text-gray-600 dark:text-gray-300 mt-2 mb-4"></p>
-                        <div class="code-block mt-3">
-                            <span class="terminal-prompt">~/ns-3-dev$</span> ./ns3 run scratch/my-first-sim
-                            <div data-key="p5_2_output" class="terminal-output mt-2 text-sm"></div>
-                        </div>
-                    </div>
-
-                    <!-- 5.3 Visualize -->
-                    <div class="step-card p-6 bg-white dark:bg-dark-card rounded-xl border-t-4 border-ns-primary shadow-lg">
-                        <h3 data-key="p5_3_title" class="text-2xl font-semibold text-ns-secondary dark:text-ns-primary"></h3>
-                        <p data-key="p5_3_desc" class="text-gray-600 dark:text-gray-300 mt-2 mb-4"></p>
-                        <div class="code-block mt-3">
-                            <span class="terminal-prompt">~/ns-3-dev$</span> ./netanim/build/NetAnim
+                        <div class="flex gap-3">
+                            <div class="font-mono font-bold text-purple-600 shrink-0 w-12">Day 6</div>
+                            <div>
+                                <p class="font-semibold">The 10-Minute Drill</p>
+                                <p class="text-sm text-slate-600">Do 3 Academic Discussion prompts. Set a timer for 10 mins strict.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </section>
 
-        </div>
+                <!-- Phase 3 -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative overflow-hidden md:col-span-2">
+                    <div class="absolute top-0 right-0 bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-bl-lg">DAYS 8-14</div>
+                    <h3 class="text-xl font-bold mb-4 text-slate-800">Phase 3: Speed & Endurance</h3>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div class="flex gap-3">
+                            <div class="font-mono font-bold text-green-600 shrink-0 w-12">Day 8</div>
+                            <div>
+                                <p class="font-semibold">Listening Note-Taking</p>
+                                <p class="text-sm text-slate-600">You will understand everything, but you will forget details. Take notes on names/dates.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="font-mono font-bold text-green-600 shrink-0 w-12">Day 9</div>
+                            <div>
+                                <p class="font-semibold">Speaking Marathon</p>
+                                <p class="text-sm text-slate-600">Do 5 Speaking questions in a row without stopping. Build stamina.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="font-mono font-bold text-green-600 shrink-0 w-12">Day 12</div>
+                            <div>
+                                <p class="font-semibold">Full Mock Test</p>
+                                <p class="text-sm text-slate-600">Use TestGlider or Magoosh Free Test.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="font-mono font-bold text-green-600 shrink-0 w-12">Day 14</div>
+                            <div>
+                                <p class="font-semibold">Logistics</p>
+                                <p class="text-sm text-slate-600">Clean your desk (Home Edition). Check your ID. Rest.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    </main>
+        <!-- Templates Section -->
+        <section id="templates">
+            <div class="flex items-center gap-3 mb-6">
+                <i class="fas fa-copy text-blue-600 text-2xl"></i>
+                <h2 class="text-3xl font-bold text-slate-900">The "Cheat Code" Templates</h2>
+            </div>
+            <p class="text-slate-600 mb-6">Memorize these exact words. They force you to be structured.</p>
 
-    <!-- Footer -->
-    <footer class="bg-gray-100 dark:bg-gray-800 mt-12 py-6 text-center text-gray-600 dark:text-gray-400 border-t border-gray-300 dark:border-gray-700 transition-colors duration-300">
-        <p data-key="footer_text" class="text-sm"></p>
-    </footer>
+            <div class="space-y-6">
+                <!-- Speaking 1 -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-microphone text-blue-500 mr-2"></i>Speaking Task 1 (The Personal Choice)</h3>
+                    <p class="text-sm text-slate-500 mb-3 italic">"Do you prefer X or Y?"</p>
+                    <div class="template-box p-4 rounded text-slate-700 font-mono text-sm leading-relaxed bg-slate-50">
+                        "Personally, I prefer <strong>[Option X]</strong> for two main reasons.<br><br>
+                        First, it is much more <strong>efficient/enjoyable</strong>. For example, <strong>[Personal Story about how X helped you]</strong>.<br><br>
+                        Second, it is <strong>safer/better/cheaper</strong>. For instance, <strong>[Specific Detail]</strong>.<br><br>
+                        That is why I think <strong>[Option X]</strong> is better."
+                    </div>
+                </div>
+
+                <!-- Speaking Integrated -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-headphones text-blue-500 mr-2"></i>Speaking Task 2-4 (Integrated)</h3>
+                    <p class="text-sm text-slate-500 mb-3 italic">Read/Listen -> Summarize. No opinions.</p>
+                    <div class="template-box p-4 rounded text-slate-700 font-mono text-sm leading-relaxed bg-slate-50">
+                        "The reading passage proposes a change to <strong>[Topic]</strong>. The speaker in the audio opposes this plan for two main reasons.<br><br>
+                        First, the speaker argues that <strong>[Reason 1]</strong>. He mentions that <strong>[Detail from audio]</strong>.<br><br>
+                        Second, he claims that <strong>[Reason 2]</strong>. For example, he notes that <strong>[Detail]</strong>.<br><br>
+                        Therefore, the speaker strongly disagrees with the proposal."
+                    </div>
+                </div>
+
+                <!-- Writing -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-keyboard text-blue-500 mr-2"></i>Writing: Academic Discussion</h3>
+                    <p class="text-sm text-slate-500 mb-3 italic">10 Minutes. 100+ Words.</p>
+                    <div class="template-box p-4 rounded text-slate-700 font-mono text-sm leading-relaxed bg-slate-50">
+                        "This is a relevant topic. While I understand <strong>[Student A]</strong>'s point about <strong>[Point A]</strong>, I agree more with <strong>[Student B]</strong> that <strong>[Point B]</strong>.<br><br>
+                        I would add that <strong>[Your New Idea]</strong>. For example, in my country, <strong>[Personal Example]</strong>.<br><br>
+                        Therefore, I believe <strong>[Summary of your view]</strong>."
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Resources -->
+        <section class="bg-slate-900 rounded-2xl p-8 text-white">
+            <h2 class="text-2xl font-bold mb-6"><i class="fas fa-link mr-2 text-blue-400"></i>Free Resource Bank</h2>
+            <div class="grid sm:grid-cols-2 gap-4">
+                <a href="https://www.ets.org/toefl/test-takers/ibt/prepare/toefl-testready.html" target="_blank" class="block p-4 bg-slate-800 rounded-lg hover:bg-slate-700 transition border border-slate-700">
+                    <div class="font-bold text-blue-400">ETS TestReady</div>
+                    <div class="text-sm text-slate-300">The Official Free Practice Test. Do this first.</div>
+                </a>
+                <a href="https://testglider.com/" target="_blank" class="block p-4 bg-slate-800 rounded-lg hover:bg-slate-700 transition border border-slate-700">
+                    <div class="font-bold text-blue-400">TestGlider</div>
+                    <div class="text-sm text-slate-300">Excellent free mock test with AI scoring.</div>
+                </a>
+                <a href="https://www.youtube.com/@TSTPrep" target="_blank" class="block p-4 bg-slate-800 rounded-lg hover:bg-slate-700 transition border border-slate-700">
+                    <div class="font-bold text-red-400">TST Prep (YouTube)</div>
+                    <div class="text-sm text-slate-300">The best channel for templates and strategy.</div>
+                </a>
+                <a href="https://www.ets.org/pdfs/toefl/toefl-ibt-writing-practice-sets.pdf" target="_blank" class="block p-4 bg-slate-800 rounded-lg hover:bg-slate-700 transition border border-slate-700">
+                    <div class="font-bold text-blue-400">Writing Prompts (PDF)</div>
+                    <div class="text-sm text-slate-300">Official list of prompts to practice typing.</div>
+                </a>
+            </div>
+        </section>
+
+        <footer class="text-center text-slate-500 py-8 text-sm">
+            <p>Designed for Quick Success • Good luck! 🇨🇲</p>
+        </footer>
+
+    </div>
 
 </body>
 </html>
