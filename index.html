@@ -2,257 +2,1150 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TOEFL Speed-Run | The Fluent Speaker's Guide</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VOID TETRIS: ENTITY 0 (TOTAL CHAOS)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.3.2/pixi.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
+        :root {
+            --void-black: #050505;
+            --toxic-green: #39FF14;
+            --crimson-alert: #FF003F;
+            --cyber-blue: #00F3FF;
+            --plague-purple: #9D00FF;
+            --glass-bg: rgba(10, 10, 10, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.15);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--void-black);
+            color: #eee;
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none; 
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        canvas { position: absolute; top: 0; left: 0; z-index: 1; }
+
+        /* --- NEW MOBILE HUD --- */
+        #mobile-hud-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(0,0,0,0.9);
+            border-bottom: 2px solid var(--toxic-green);
+            z-index: 1000; /* FORCE ON TOP */
+            display: none; /* Flex on mobile */
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            box-sizing: border-box;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        .gradient-text {
-            background: linear-gradient(to right, #2563eb, #9333ea);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+
+        .hud-stat {
+            font-family: 'Orbitron';
+            font-size: 1.2rem;
+            color: white;
+            font-weight: bold;
         }
-        .template-box {
-            border-left: 4px solid #2563eb;
-            background-color: #f8fafc;
+        .hud-stat span { color: var(--toxic-green); }
+
+        /* --- FLASH OVERLAY FOR CURSES --- */
+        #curse-flash {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Orbitron';
+            font-weight: 900;
+            font-size: 4rem;
+            color: var(--crimson-alert);
+            text-shadow: 0 0 30px red;
+            text-align: center;
+            z-index: 2000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            width: 100%;
+        }
+        .flash-anim {
+            animation: flashBang 2s forwards;
+        }
+        @keyframes flashBang {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            10% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+        }
+
+        /* --- POLISH: CRT SCANLINE & VIGNETTE --- */
+.scanlines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0,0,0,0.2) 50%,
+        rgba(0,0,0,0.2)
+    );
+    background-size: 100% 4px;
+    z-index: 9999; /* TOP OF EVERYTHING */
+    pointer-events: none; /* Let clicks pass through */
+    animation: flicker 0.15s infinite;
+    box-shadow: inset 0 0 100px rgba(0,0,0,0.9); /* Vignette */
+}
+
+@keyframes flicker {
+    0% { opacity: 0.9; }
+    50% { opacity: 0.85; }
+    100% { opacity: 0.9; }
+}
+
+/* --- POLISH: GLITCH TEXT ANIMATION --- */
+.glitch-text {
+    position: relative;
+    animation: shake 2s infinite;
+}
+.glitch-text::before, .glitch-text::after {
+    content: "VOID TETRIS";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--void-black);
+}
+.glitch-text::before {
+    left: 2px;
+    text-shadow: -1px 0 red;
+    clip: rect(24px, 550px, 90px, 0);
+    animation: glitch-anim-1 2.5s infinite linear alternate-reverse;
+}
+.glitch-text::after {
+    left: -2px;
+    text-shadow: -1px 0 blue;
+    clip: rect(85px, 550px, 140px, 0);
+    animation: glitch-anim-2 3s infinite linear alternate-reverse;
+}
+
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+@keyframes glitch-anim-1 {
+    0% { clip: rect(20px, 9999px, 10px, 0); }
+    100% { clip: rect(80px, 9999px, 100px, 0); }
+}
+@keyframes glitch-anim-2 {
+    0% { clip: rect(120px, 9999px, 10px, 0); }
+    100% { clip: rect(10px, 9999px, 80px, 0); }
+}
+
+        /* --- DESKTOP UI --- */
+        .ui-layer {
+            position: absolute;
+            z-index: 10;
+            width: 90%;
+            height: 90%;
+            display: grid;
+            grid-template-columns: 320px 1fr 320px;
+            pointer-events: none;
+        }
+
+        .panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.9);
+            transition: all 0.2s;
+        }
+
+        .panel.cursed-mode { border: 2px solid var(--crimson-alert); box-shadow: 0 0 25px var(--crimson-alert) inset; }
+
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            font-size: 1.4rem;
+            color: var(--toxic-green);
+            text-transform: uppercase;
+            border-bottom: 2px solid rgba(57, 255, 20, 0.2);
+            padding-bottom: 10px;
+        }
+
+        .stat-row { display: flex; justify-content: space-between; font-size: 1.2rem; }
+        .value { font-weight: 900; font-family: 'Orbitron'; }
+
+        #log-terminal {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: var(--cyber-blue);
+            height: 250px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+        .log-warn { color: var(--crimson-alert); background: rgba(255,0,0,0.1); }
+
+        /* --- CONTROLS --- */
+        #mobile-controls {
+            display: none;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 180px;
+            z-index: 1000;
+            pointer-events: all;
+            justify-content: space-between;
+            padding: 0 20px 30px 20px;
+            box-sizing: border-box;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        }
+
+        .control-group { display: flex; gap: 15px; align-items: flex-end; }
+
+        .mob-btn {
+            width: 70px;
+            height: 70px;
+            background: rgba(255,255,255,0.08);
+            border: 2px solid var(--toxic-green);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: var(--toxic-green);
+            backdrop-filter: blur(4px);
+            touch-action: manipulation;
+        }
+        .mob-btn:active { background: var(--toxic-green); color: black; transform: scale(0.9); }
+        .btn-big { width: 90px; height: 90px; border-color: var(--crimson-alert); color: var(--crimson-alert); }
+        .btn-big:active { background: var(--crimson-alert); }
+
+        /* --- SCREENS --- */
+        #start-screen, #game-over-screen {
+            position: absolute;
+            z-index: 2000;
+            background: rgba(5, 5, 5, 0.98);
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: all;
+        }
+        .hidden { display: none !important; }
+
+        .btn-cyber {
+            margin-top: 40px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid var(--toxic-green);
+            color: var(--toxic-green);
+            padding: 20px 60px;
+            font-family: 'Orbitron';
+            font-size: 1.8rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+        }
+        .btn-cyber:hover { background: var(--toxic-green); color: #000; box-shadow: 0 0 30px var(--toxic-green); }
+
+        .btn-share {
+            margin-top: 20px;
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-family: 'Rajdhani';
+            font-weight: bold;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #threat-meter-box { height: 10px; width: 100%; background: #222; margin-top: 10px; border: 1px solid #444; }
+        #threat-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--toxic-green), var(--crimson-alert)); transition: width 0.2s linear; }
+
+        @media (max-width: 900px) {
+            .ui-layer { display: none; } /* Hide desktop UI */
+            #mobile-hud-bar { display: flex; } /* Show mobile top bar */
+            #mobile-controls { display: flex; }
+            #start-screen h1 { font-size: 3rem; }
+            #curse-flash { font-size: 2.5rem; width: 90%; }
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body>
+    <div class="scanlines"></div>
 
-    <!-- Navigation -->
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="font-bold text-xl tracking-tight">TOEFL<span class="text-blue-600">SpeedRun</span> 🇨🇲</div>
-            <div class="text-sm text-slate-500 font-medium hidden sm:block">Target: 110+</div>
+<div id="game-container">
+    <div id="mobile-hud-bar">
+        <div class="hud-stat">SCR: <span id="mob-score">0</span></div>
+        <div class="hud-stat" id="mob-alert" style="color:var(--crimson-alert); display:none;">⚠ ERROR ⚠</div>
+    </div>
+
+    <div id="curse-flash"></div>
+
+    <div class="ui-layer">
+        <div class="panel" id="panel-left">
+            <h2>Entropy Monitor</h2>
+            <div class="stat-row"><span>Threat Level</span><span class="value" id="threat-val">0%</span></div>
+            <div id="threat-meter-box"><div id="threat-fill"></div></div>
+            <div id="active-curse-text" style="color:var(--crimson-alert); margin-top:15px; font-weight:bold; text-align:center;">NO ANOMALIES</div>
+            <div class="stat-row" style="margin-top: 20px;"><span>Status</span><span class="value" id="status-val">STABLE</span></div>
+            <h2 style="margin-top: 30px;">Entity Log</h2>
+            <div id="log-terminal"></div>
         </div>
-    </nav>
 
-    <!-- Hero Section -->
-    <div class="bg-white border-b border-slate-200">
-        <div class="max-w-4xl mx-auto px-4 py-12 text-center">
-            <span class="inline-block py-1 px-3 rounded-full bg-blue-100 text-blue-700 text-xs font-bold tracking-wide mb-4 uppercase">For Fluent Speakers Only</span>
-            <h1 class="text-4xl md:text-5xl font-extrabold mb-4 text-slate-900">Don't Study English.<br><span class="gradient-text">Study The Game.</span></h1>
-            <p class="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                You are already fluent. Your biggest enemy isn't vocabulary—it's the clock. This is your 14-day crash course to beating the format without wasting time on grammar.
-            </p>
-            <div class="mt-8 flex justify-center gap-4">
-                <a href="#plan" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition shadow-lg shadow-blue-500/30">Start 14-Day Plan</a>
-                <a href="#templates" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold py-3 px-6 rounded-lg transition">View Templates</a>
-            </div>
+        <div style="pointer-events: none;"></div>
+
+        <div class="panel" id="panel-right">
+            <h2>Mission Data</h2>
+            <div class="stat-row"><span>Score</span><span class="value" id="score-val">0</span></div>
+            <div class="stat-row"><span>Lines</span><span class="value" id="lines-val">0</span></div>
+            <div class="stat-row"><span>Level</span><span class="value" id="level-val">1</span></div>
         </div>
     </div>
 
-    <div class="max-w-4xl mx-auto px-4 py-8 space-y-12">
-
-        <!-- The Warning -->
-        <section class="bg-red-50 border border-red-100 rounded-2xl p-6 sm:p-8">
-            <div class="flex items-start gap-4">
-                <div class="bg-red-100 p-3 rounded-full text-red-600 shrink-0">
-                    <i class="fas fa-exclamation-triangle text-xl"></i>
-                </div>
-                <div>
-                    <h2 class="text-xl font-bold text-red-800 mb-2">The "Native Speaker Trap"</h2>
-                    <p class="text-red-700 mb-4">
-                        Fluent speakers fail because they treat the test like a casual conversation. 
-                    </p>
-                    <ul class="list-disc list-inside text-red-700 space-y-1 text-sm sm:text-base">
-                        <li><strong>DO NOT</strong> be creative. Be boring. Be predictable.</li>
-                        <li><strong>DO NOT</strong> say "Umm" or "Uh." Silence is better than fillers.</li>
-                        <li><strong>DO NOT</strong> give your opinion unless specifically asked (Task 1 only).</li>
-                        <li><strong>Spelling:</strong> Pick ONE style (US or UK) and stick to it. Don't mix <em>Colour</em> and <em>Center</em>.</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <!-- The Plan -->
-        <section id="plan">
-            <div class="flex items-center gap-3 mb-6">
-                <i class="fas fa-calendar-alt text-blue-600 text-2xl"></i>
-                <h2 class="text-3xl font-bold text-slate-900">The 14-Day Schedule</h2>
-            </div>
-
-            <div class="grid gap-6 md:grid-cols-2">
-                <!-- Phase 1 -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-bl-lg">DAYS 1-3</div>
-                    <h3 class="text-xl font-bold mb-4 text-slate-800">Phase 1: The Wake-Up Call</h3>
-                    <div class="space-y-4">
-                        <div class="flex gap-3">
-                            <div class="font-mono font-bold text-blue-600 shrink-0 w-12">Day 1</div>
-                            <div>
-                                <p class="font-semibold">Diagnostic Test</p>
-                                <p class="text-sm text-slate-600">Take the free ETS test. Don't worry about the score. Feel the weirdness of the timer.</p>
-                                <a href="https://www.ets.org/toefl/test-takers/ibt/prepare/toefl-testready.html" target="_blank" class="text-blue-600 text-xs font-bold hover:underline mt-1 inline-block">Open Diagnostic &rarr;</a>
-                            </div>
-                        </div>
-                        <div class="flex gap-3">
-                            <div class="font-mono font-bold text-blue-600 shrink-0 w-12">Day 2</div>
-                            <div>
-                                <p class="font-semibold">Speaking Task 1 Drill</p>
-                                <p class="text-sm text-slate-600">Record yourself answering "Do you prefer books or movies?". Speak for <strong>exactly 45s</strong>.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-3">
-                            <div class="font-mono font-bold text-blue-600 shrink-0 w-12">Day 3</div>
-                            <div>
-                                <p class="font-semibold">Memorize Templates</p>
-                                <p class="text-sm text-slate-600">Scroll down and memorize the "Cheat Codes". Do not change them.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Phase 2 -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 bg-purple-100 text-purple-800 text-xs font-bold px-3 py-1 rounded-bl-lg">DAYS 4-7</div>
-                    <h3 class="text-xl font-bold mb-4 text-slate-800">Phase 2: The New Tasks</h3>
-                    <div class="space-y-4">
-                        <div class="flex gap-3">
-                            <div class="font-mono font-bold text-purple-600 shrink-0 w-12">Day 4</div>
-                            <div>
-                                <p class="font-semibold">Writing: Integrated Task</p>
-                                <p class="text-sm text-slate-600">Read a text, listen to a lecture, write a summary. <strong>No opinions allowed.</strong></p>
-                            </div>
-                        </div>
-                        <div class="flex gap-3">
-                            <div class="font-mono font-bold text-purple-600 shrink-0 w-12">Day 5</div>
-                            <div>
-                                <p class="font-semibold">Writing: Academic Discussion</p>
-                                <p class="text-sm text-slate-600"><strong>NEW TASK!</strong> Respond to a professor and 2 students in 10 minutes.</p>
-                                <a href="https://www.youtube.com/watch?v=_Hd3IwnOEfs" target="_blank" class="text-purple-600 text-xs font-bold hover:underline mt-1 inline-block">Watch Strategy Video &rarr;</a>
-                            </div>
-                        </div>
-                        <div class="flex gap-3">
-                            <div class="font-mono font-bold text-purple-600 shrink-0 w-12">Day 6</div>
-                            <div>
-                                <p class="font-semibold">The 10-Minute Drill</p>
-                                <p class="text-sm text-slate-600">Do 3 Academic Discussion prompts. Set a timer for 10 mins strict.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Phase 3 -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative overflow-hidden md:col-span-2">
-                    <div class="absolute top-0 right-0 bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-bl-lg">DAYS 8-14</div>
-                    <h3 class="text-xl font-bold mb-4 text-slate-800">Phase 3: Speed & Endurance</h3>
-                    <div class="grid sm:grid-cols-2 gap-4">
-                        <div class="flex gap-3">
-                            <div class="font-mono font-bold text-green-600 shrink-0 w-12">Day 8</div>
-                            <div>
-                                <p class="font-semibold">Listening Note-Taking</p>
-                                <p class="text-sm text-slate-600">You will understand everything, but you will forget details. Take notes on names/dates.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-3">
-                            <div class="font-mono font-bold text-green-600 shrink-0 w-12">Day 9</div>
-                            <div>
-                                <p class="font-semibold">Speaking Marathon</p>
-                                <p class="text-sm text-slate-600">Do 5 Speaking questions in a row without stopping. Build stamina.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-3">
-                            <div class="font-mono font-bold text-green-600 shrink-0 w-12">Day 12</div>
-                            <div>
-                                <p class="font-semibold">Full Mock Test</p>
-                                <p class="text-sm text-slate-600">Use TestGlider or Magoosh Free Test.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-3">
-                            <div class="font-mono font-bold text-green-600 shrink-0 w-12">Day 14</div>
-                            <div>
-                                <p class="font-semibold">Logistics</p>
-                                <p class="text-sm text-slate-600">Clean your desk (Home Edition). Check your ID. Rest.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Templates Section -->
-        <section id="templates">
-            <div class="flex items-center gap-3 mb-6">
-                <i class="fas fa-copy text-blue-600 text-2xl"></i>
-                <h2 class="text-3xl font-bold text-slate-900">The "Cheat Code" Templates</h2>
-            </div>
-            <p class="text-slate-600 mb-6">Memorize these exact words. They force you to be structured.</p>
-
-            <div class="space-y-6">
-                <!-- Speaking 1 -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-microphone text-blue-500 mr-2"></i>Speaking Task 1 (The Personal Choice)</h3>
-                    <p class="text-sm text-slate-500 mb-3 italic">"Do you prefer X or Y?"</p>
-                    <div class="template-box p-4 rounded text-slate-700 font-mono text-sm leading-relaxed bg-slate-50">
-                        "Personally, I prefer <strong>[Option X]</strong> for two main reasons.<br><br>
-                        First, it is much more <strong>efficient/enjoyable</strong>. For example, <strong>[Personal Story about how X helped you]</strong>.<br><br>
-                        Second, it is <strong>safer/better/cheaper</strong>. For instance, <strong>[Specific Detail]</strong>.<br><br>
-                        That is why I think <strong>[Option X]</strong> is better."
-                    </div>
-                </div>
-
-                <!-- Speaking Integrated -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-headphones text-blue-500 mr-2"></i>Speaking Task 2-4 (Integrated)</h3>
-                    <p class="text-sm text-slate-500 mb-3 italic">Read/Listen -> Summarize. No opinions.</p>
-                    <div class="template-box p-4 rounded text-slate-700 font-mono text-sm leading-relaxed bg-slate-50">
-                        "The reading passage proposes a change to <strong>[Topic]</strong>. The speaker in the audio opposes this plan for two main reasons.<br><br>
-                        First, the speaker argues that <strong>[Reason 1]</strong>. He mentions that <strong>[Detail from audio]</strong>.<br><br>
-                        Second, he claims that <strong>[Reason 2]</strong>. For example, he notes that <strong>[Detail]</strong>.<br><br>
-                        Therefore, the speaker strongly disagrees with the proposal."
-                    </div>
-                </div>
-
-                <!-- Writing -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fas fa-keyboard text-blue-500 mr-2"></i>Writing: Academic Discussion</h3>
-                    <p class="text-sm text-slate-500 mb-3 italic">10 Minutes. 100+ Words.</p>
-                    <div class="template-box p-4 rounded text-slate-700 font-mono text-sm leading-relaxed bg-slate-50">
-                        "This is a relevant topic. While I understand <strong>[Student A]</strong>'s point about <strong>[Point A]</strong>, I agree more with <strong>[Student B]</strong> that <strong>[Point B]</strong>.<br><br>
-                        I would add that <strong>[Your New Idea]</strong>. For example, in my country, <strong>[Personal Example]</strong>.<br><br>
-                        Therefore, I believe <strong>[Summary of your view]</strong>."
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Resources -->
-        <section class="bg-slate-900 rounded-2xl p-8 text-white">
-            <h2 class="text-2xl font-bold mb-6"><i class="fas fa-link mr-2 text-blue-400"></i>Free Resource Bank</h2>
-            <div class="grid sm:grid-cols-2 gap-4">
-                <a href="https://www.ets.org/toefl/test-takers/ibt/prepare/toefl-testready.html" target="_blank" class="block p-4 bg-slate-800 rounded-lg hover:bg-slate-700 transition border border-slate-700">
-                    <div class="font-bold text-blue-400">ETS TestReady</div>
-                    <div class="text-sm text-slate-300">The Official Free Practice Test. Do this first.</div>
-                </a>
-                <a href="https://testglider.com/" target="_blank" class="block p-4 bg-slate-800 rounded-lg hover:bg-slate-700 transition border border-slate-700">
-                    <div class="font-bold text-blue-400">TestGlider</div>
-                    <div class="text-sm text-slate-300">Excellent free mock test with AI scoring.</div>
-                </a>
-                <a href="https://www.youtube.com/@TSTPrep" target="_blank" class="block p-4 bg-slate-800 rounded-lg hover:bg-slate-700 transition border border-slate-700">
-                    <div class="font-bold text-red-400">TST Prep (YouTube)</div>
-                    <div class="text-sm text-slate-300">The best channel for templates and strategy.</div>
-                </a>
-                <a href="https://www.ets.org/pdfs/toefl/toefl-ibt-writing-practice-sets.pdf" target="_blank" class="block p-4 bg-slate-800 rounded-lg hover:bg-slate-700 transition border border-slate-700">
-                    <div class="font-bold text-blue-400">Writing Prompts (PDF)</div>
-                    <div class="text-sm text-slate-300">Official list of prompts to practice typing.</div>
-                </a>
-            </div>
-        </section>
-
-        <footer class="text-center text-slate-500 py-8 text-sm">
-            <p>Designed for Quick Success • Good luck! 🇨🇲</p>
-        </footer>
-
+    <div id="mobile-controls">
+        <div class="control-group">
+            <div class="mob-btn" id="btn-left">←</div>
+            <div class="mob-btn" id="btn-right">→</div>
+        </div>
+        <div class="control-group">
+            <div class="mob-btn" id="btn-rotate">↻</div>
+            <div class="mob-btn btn-big" id="btn-drop">↓</div>
+        </div>
+    </div>
+    <div id="start-screen">
+    <h1 class="glitch-text" style="font-family: 'Orbitron'; font-size: 4rem; text-align:center; color: #fff; margin-bottom: 0;">VOID TETRIS</h1>
+    
+    <h2 style="color: var(--crimson-alert); letter-spacing: 4px; margin-top: 10px; text-align: center; animation: pulse 1s infinite;">// SYSTEM UNSTABLE //</h2>
+    
+    <div style="border: 1px solid #444; background: rgba(0,0,0,0.8); padding: 20px; max-width: 400px; text-align: center; margin: 20px;">
+        <p style="color: var(--toxic-green); font-family: 'Courier New'; font-size: 0.9rem;">
+            WARNING: CONTAINS FLASHING LIGHTS, INPUT LAG, AND UNFAIR MECHANICS.
+        </p>
+        <p style="color: #666; font-size: 0.8rem; margin-top: 10px;">
+            VER: 0.9.9 [CURSED] By  <a href="https://twitter.com/DevKuns43926" target="_blank" style="color: #FF0000; text-decoration: none; border-bottom: 1px solid #FF0000; transition: all 0.2s;"> @DevKuns43926</a> <br>
+            STATUS: COMPROMISED
+        </p>
     </div>
 
+    <button class="btn-cyber" onclick="startGame()">INITIATE SEQUENCE</button>
+</div>
+
+    <div id="game-over-screen" class="hidden">
+        <h1 style="font-family: 'Orbitron'; color: var(--crimson-alert); font-size: 3rem;">YOU DIED</h1>
+        <div style="font-family: 'Courier New'; text-align: left; background: #080808; padding: 20px; border: 1px solid #333; margin-bottom: 20px;">
+            <p style="color: var(--plague-purple)" id="death-insult">"PATHETIC."</p>
+            <p>> SCORE: <span id="final-score" style="color:white">0</span></p>
+        </div>
+        <button class="btn-share" onclick="shareScore()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            POST DISASTER
+        </button>
+        <button class="btn-cyber" style="margin-top: 15px; font-size: 1.2rem; padding: 10px 30px;" onclick="location.reload()">REBOOT?</button>
+    </div>
+</div>
+
+<script type="module">
+/* --- CONFIGURATION --- */
+const COLS = 10;
+const ROWS = 20;
+const BLOCK_SIZE = 35;
+const COLORS = [
+    0x000000, 
+    0x00F3FF, // I
+    0x39FF14, // J
+    0xFF003F, // L
+    0xFFD700, // O
+    0xBD00FF, // S
+    0xFF6600, // T
+    0xFFFFFF  // Z
+];
+
+/* --- SOUND ENGINE --- */
+class SoundEngine {
+    constructor() {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.value = 0.3;
+        this.masterGain.connect(this.ctx.destination);
+    }
+    playTone(freq, type, duration, slideTo = null, vol = 0.5) {
+        if(this.ctx.state === 'suspended') this.ctx.resume();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, this.ctx.currentTime + duration);
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    }
+    playMove() { this.playTone(300, 'square', 0.05, 200, 0.3); }
+    playRotate() { this.playTone(600, 'sine', 0.1, null, 0.3); }
+    playHardDrop() { this.playTone(100, 'sawtooth', 0.3, 10, 0.6); }
+    playClear() { 
+        this.playTone(400, 'square', 0.1, 800); 
+        setTimeout(() => this.playTone(600, 'square', 0.2, 1200), 100);
+    }
+    playCurse() { this.playTone(800, 'sawtooth', 1.0, 50, 0.8); }
+    playError() { this.playTone(150, 'sawtooth', 0.5, 100, 0.8); } // For lag/error
+}
+const AudioSys = new SoundEngine();
+
+/* --- STATE STORE --- */
+class GameStore {
+    constructor() {
+        this.grid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+        this.score = 0;
+        this.lines = 0;
+        this.level = 1;
+        this.gameOver = false;
+        this.startTime = Date.now();
+        this.hazardLevel = 0;
+        
+        // Hell State Flags
+        this.activeCurse = null; 
+        this.curseTimer = 0;
+        this.shakeStrength = 0;
+        this.chromaticVal = 0;
+    }
+    reset() {
+        this.grid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+        this.score = 0;
+        this.lines = 0;
+        this.level = 1;
+        this.gameOver = false;
+        this.startTime = Date.now();
+        this.hazardLevel = 0;
+        this.activeCurse = null;
+        
+        // GARBAGE START (Preserved)
+        this.generateGarbage();
+    }
+    
+    generateGarbage() {
+        for(let y = ROWS - 5; y < ROWS; y++) {
+            const holeIdx = Math.floor(Math.random() * COLS);
+            for(let x = 0; x < COLS; x++) {
+                if (x !== holeIdx) {
+                    this.grid[y][x] = COLORS[Math.floor(Math.random() * 7) + 1];
+                }
+            }
+        }
+    }
+}
+const Store = new GameStore();
+
+/* --- RENDERER (PixiJS) --- */
+class VoidRenderer {
+    constructor() {
+        this.app = new PIXI.Application({
+            width: window.innerWidth,
+            height: window.innerHeight,
+            backgroundColor: 0x050505,
+            antialias: true,
+            resolution: window.devicePixelRatio || 1,
+            autoDensity: true
+        });
+        document.querySelector('#game-container').appendChild(this.app.view);
+        
+        this.mainStage = new PIXI.Container();
+        this.app.stage.addChild(this.mainStage); 
+
+        this.gameContainer = new PIXI.Container(); 
+        this.particleContainer = new PIXI.Container();
+        this.uiContainer = new PIXI.Container(); 
+        
+        this.mainStage.addChild(this.gameContainer);
+        this.mainStage.addChild(this.particleContainer);
+        this.mainStage.addChild(this.uiContainer);
+
+        this.particles = [];
+        this.floatingTexts = [];
+
+        this.initShaders();
+        this.initGridVisuals();
+        window.addEventListener('resize', () => this.resize());
+    }
+
+    initShaders() {
+        const fragSrc = `
+            precision mediump float;
+            uniform float time;
+            uniform float rgbSplit;
+            varying vec2 vTextureCoord;
+            uniform sampler2D uSampler;
+            void main() {
+                vec2 uv = vTextureCoord;
+                vec4 r = texture2D(uSampler, uv - vec2(rgbSplit, 0.0));
+                vec4 g = texture2D(uSampler, uv);
+                vec4 b = texture2D(uSampler, uv + vec2(rgbSplit, 0.0));
+                gl_FragColor = vec4(r.r, g.g, b.b, 1.0);
+            }
+        `;
+        this.screenFilter = new PIXI.Filter(null, fragSrc, { time: 0.0, rgbSplit: 0.0 });
+        this.app.stage.filters = [this.screenFilter];
+    }
+
+    initGridVisuals() {
+        this.gameContainer.x = (this.app.screen.width / 2);
+        this.gameContainer.y = (this.app.screen.height / 2);
+        this.gameContainer.pivot.x = (COLS * BLOCK_SIZE) / 2;
+        this.gameContainer.pivot.y = (ROWS * BLOCK_SIZE) / 2;
+        
+        this.border = new PIXI.Graphics();
+        this.gameContainer.addChild(this.border);
+        this.blockGraphics = new PIXI.Graphics();
+        this.gameContainer.addChild(this.blockGraphics);
+    }
+
+    drawBorder() {
+        // GPU DYING (Miser #12): Do not clear border
+        if(Store.activeCurse !== "GPU_DIE") {
+            this.border.clear();
+        }
+        
+        let color = 0x333333;
+        if(Store.activeCurse) color = 0x9D00FF;
+        if(Store.activeCurse === 'AUSTRALIA') color = 0xFF6600;
+        
+        this.border.lineStyle(4, color, 1);
+        this.border.drawRect(-5, -5, (COLS * BLOCK_SIZE) + 10, (ROWS * BLOCK_SIZE) + 10);
+    }
+
+    spawnParticle(x, y, color) {
+        for(let i=0; i<8; i++) {
+            const p = new PIXI.Graphics();
+            p.beginFill(color);
+            p.drawRect(0,0,4,4);
+            p.endFill();
+            p.x = x; p.y = y;
+            p.vx = (Math.random() - 0.5) * 10;
+            p.vy = (Math.random() - 0.5) * 10;
+            p.life = 1.0;
+            this.particleContainer.addChild(p);
+            this.particles.push(p);
+        }
+    }
+
+    spawnFloatingText(text, x, y, color) {
+        const t = new PIXI.Text(text, { fontFamily: 'Orbitron', fontSize: 24, fill: color, fontWeight: 'bold', stroke: '#000000', strokeThickness: 4 });
+        t.x = x; t.y = y; t.life = 1.0;
+        this.uiContainer.addChild(t);
+        this.floatingTexts.push(t);
+    }
+
+    resize() {
+        this.app.renderer.resize(window.innerWidth, window.innerHeight);
+        this.gameContainer.x = (this.app.screen.width / 2);
+        this.gameContainer.y = (this.app.screen.height / 2);
+    }
+
+    render(dt) {
+        const timeVal = performance.now() / 1000;
+        
+        // AUSTRALIA (Misery #2)
+        if (Store.activeCurse === "AUSTRALIA") {
+            this.gameContainer.rotation += (Math.PI - this.gameContainer.rotation) * 0.1;
+        } else {
+            this.gameContainer.rotation += (0 - this.gameContainer.rotation) * 0.1;
+        }
+
+        // ZOOMIES (Misery #6)
+        if (Store.activeCurse === "ZOOM" && Store.activePiece) {
+            this.gameContainer.scale.x += (2.5 - this.gameContainer.scale.x) * 0.1;
+            this.gameContainer.scale.y += (2.5 - this.gameContainer.scale.y) * 0.1;
+            const targetPX = (Store.activePiece.x * BLOCK_SIZE);
+            const targetPY = (Store.activePiece.y * BLOCK_SIZE);
+            this.gameContainer.pivot.x += (targetPX - this.gameContainer.pivot.x) * 0.1;
+            this.gameContainer.pivot.y += (targetPY - this.gameContainer.pivot.y) * 0.1;
+        } else {
+            this.gameContainer.scale.x += (1 - this.gameContainer.scale.x) * 0.1;
+            this.gameContainer.scale.y += (1 - this.gameContainer.scale.y) * 0.1;
+            this.gameContainer.pivot.x += (((COLS * BLOCK_SIZE)/2) - this.gameContainer.pivot.x) * 0.1;
+            this.gameContainer.pivot.y += (((ROWS * BLOCK_SIZE)/2) - this.gameContainer.pivot.y) * 0.1;
+        }
+
+        // Screen Shake & Chromatic
+        if (Store.shakeStrength > 0) {
+            this.mainStage.x = (Math.random() - 0.5) * Store.shakeStrength;
+            this.mainStage.y = (Math.random() - 0.5) * Store.shakeStrength;
+            Store.shakeStrength *= 0.9;
+        }
+        if (Store.chromaticVal > 0) {
+            this.screenFilter.uniforms.rgbSplit = Store.chromaticVal;
+            Store.chromaticVal *= 0.9;
+        } else {
+            this.screenFilter.uniforms.rgbSplit = 0.001; 
+        }
+        this.screenFilter.uniforms.time = timeVal;
+
+        // GPU DYING (Misery #12): Smearing Effect
+        if(Store.activeCurse !== "GPU_DIE") {
+            this.blockGraphics.clear();
+        } else {
+            // Fade out slightly to create trails rather than solid walls
+            this.blockGraphics.alpha = 0.95; 
+        }
+        
+        this.drawBorder();
+
+        // Draw Grid
+        for(let r=0; r<ROWS; r++) {
+            for(let c=0; c<COLS; c++) {
+                if(Store.grid[r][c] !== 0) {
+                    this.drawBlock(c, r, Store.grid[r][c], 1, timeVal);
+                }
+            }
+        }
+
+        // Active Piece & Ghost
+        if(Store.activePiece) {
+            let ghostY = Store.activePiece.y;
+            while(!checkCollision(Store.activePiece.x, ghostY + 1, Store.activePiece.shape)) ghostY++;
+            
+            // Draw Ghost
+            this.drawBlockShape(Store.activePiece.x, ghostY, Store.activePiece.shape, Store.activePiece.color, 0.15, true); 
+        
+            // GHOST MODE (Misery #11): Invisible Piece
+            let pieceAlpha = 1.0;
+            if(Store.activeCurse === 'GHOST') pieceAlpha = 0;
+
+            this.drawBlockShape(Store.activePiece.x, Store.activePiece.y, Store.activePiece.shape, Store.activePiece.color, pieceAlpha, false, timeVal);
+        }
+
+        // Particles
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.life -= 0.05; p.alpha = p.life;
+            if(p.life <= 0) { this.particleContainer.removeChild(p); this.particles.splice(i, 1); }
+        }
+        for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+            const t = this.floatingTexts[i];
+            t.y -= 2; t.life -= 0.02; t.alpha = t.life;
+            if(t.life <= 0) { this.uiContainer.removeChild(t); this.floatingTexts.splice(i, 1); }
+        }
+    }
+
+    drawBlock(x, y, colorVal, alpha = 1, time=0) {
+        const size = BLOCK_SIZE;
+        const pad = 3;
+        
+        // MOSH PIT (Misery #3)
+        if (Store.activeCurse === 'MOSH') {
+            const hue = (time * 5 + (x * 0.1) + (y * 0.1)) % 1;
+            const r = Math.sin(hue * 6.28 + 0) * 127 + 128;
+            const g = Math.sin(hue * 6.28 + 2) * 127 + 128;
+            const b = Math.sin(hue * 6.28 + 4) * 127 + 128;
+            colorVal = (r << 16) | (g << 8) | b;
+        }
+
+        this.blockGraphics.beginFill(colorVal, alpha);
+        this.blockGraphics.drawRect(x * size + pad, y * size + pad, size - pad*2, size - pad*2);
+        this.blockGraphics.endFill();
+    }
+
+    drawBlockShape(bx, by, shape, color, alpha, isGhost=false, time=0) {
+        shape.forEach((row, r) => {
+            row.forEach((val, c) => {
+                if(val) this.drawBlock(bx + c, by + r, isGhost ? 0xFFFFFF : color, alpha, time);
+            });
+        });
+    }
+}
+
+/* --- LOGIC SYSTEMS --- */
+const TETROMINOS = [
+    [[1, 1, 1, 1]], [[1, 0, 0], [1, 1, 1]], [[0, 0, 1], [1, 1, 1]], 
+    [[1, 1], [1, 1]], [[0, 1, 1], [1, 1, 0]], [[0, 1, 0], [1, 1, 1]], 
+    [[1, 1, 0], [0, 1, 1]] 
+];
+
+function createPiece() {
+    // IDENTITY CRISIS (Misery #4)
+    if (Store.activeCurse === "TROLL" || (Math.random() < 0.05 && Store.level > 3)) {
+         const trolls = [
+             { s: [[1]], c: 0xFFFFFF }, 
+             { s: [[1,1,1],[1,1,1],[1,1,1]], c: 0x555555 }, 
+             { s: [[1,0,1],[0,1,0],[1,0,1]], c: 0xFF003F }, 
+             { s: [[1,1,1,1,1]], c: 0x00F3FF } 
+         ];
+         const t = trolls[Math.floor(Math.random() * trolls.length)];
+         return { shape: t.s, color: t.c, x: Math.floor(COLS/2)-1, y: 0 };
+    }
+    const typeIdx = Math.floor(Math.random() * TETROMINOS.length);
+    return {
+        shape: TETROMINOS[typeIdx],
+        color: COLORS[typeIdx + 1],
+        x: Math.floor(COLS / 2) - 1,
+        y: 0
+    };
+}
+
+function checkCollision(x, y, shape) {
+    for (let r = 0; r < shape.length; r++) {
+        for (let c = 0; c < shape[r].length; c++) {
+            if (shape[r][c]) {
+                const newX = x + c;
+                const newY = y + r;
+                if (newX < 0 || newX >= COLS || newY >= ROWS) return true;
+                if (newY >= 0 && Store.grid[newY][newX] !== 0) return true;
+            }
+        }
+    }
+    return false;
+}
+
+function rotate(piece) {
+    if (Store.activeCurse === "LOCKED") return;
+    const newShape = piece.shape[0].map((val, index) => piece.shape.map(row => row[index]).reverse());
+    const oldShape = piece.shape;
+    piece.shape = newShape;
+    if (checkCollision(piece.x, piece.y, piece.shape)) {
+        if (!checkCollision(piece.x - 1, piece.y, piece.shape)) piece.x -= 1;
+        else if (!checkCollision(piece.x + 1, piece.y, piece.shape)) piece.x += 1;
+        else piece.shape = oldShape; 
+    } else {
+        AudioSys.playRotate();
+    }
+}
+
+function mergePiece() {
+    Store.shakeStrength = 10; 
+    Store.chromaticVal = 0.005; 
+    AudioSys.playHardDrop();
+    if(navigator.vibrate) navigator.vibrate(20);
+
+    // SLIPPERY FLOORS (Misery #7)
+    if(Store.activeCurse === "SLIPPERY") {
+        const slide = Math.random() > 0.5 ? 1 : -1;
+        if(!checkCollision(Store.activePiece.x + slide, Store.activePiece.y, Store.activePiece.shape)) {
+            Store.activePiece.x += slide;
+        }
+    }
+
+    // GASLIGHT (Misery #5)
+    let finalColor = Store.activePiece.color;
+    if(Store.activeCurse === "GASLIGHT") {
+        const fakeColors = [0xFF003F, 0x39FF14, 0x00F3FF]; 
+        finalColor = fakeColors[Math.floor(Math.random() * fakeColors.length)];
+    }
+
+    const screenX = renderer.gameContainer.x + ((Store.activePiece.x - COLS/2) * BLOCK_SIZE);
+    const screenY = renderer.gameContainer.y + ((Store.activePiece.y - ROWS/2) * BLOCK_SIZE);
+    renderer.spawnParticle(screenX, screenY, finalColor);
+
+    Store.activePiece.shape.forEach((row, r) => {
+        row.forEach((val, c) => {
+            if (val) {
+                const py = Store.activePiece.y + r;
+                const px = Store.activePiece.x + c;
+                if(py >= 0 && py < ROWS) Store.grid[py][px] = finalColor;
+            }
+        });
+    });
+    
+    let linesCleared = 0;
+    for (let r = ROWS - 1; r >= 0; r--) {
+        if (Store.grid[r].every(val => val !== 0)) {
+            Store.grid.splice(r, 1);
+            Store.grid.unshift(Array(COLS).fill(0));
+            linesCleared++;
+            r++; 
+        }
+    }
+    
+    if (linesCleared > 0) {
+        const points = linesCleared * 100 * Store.level;
+        Store.score += points;
+        Store.lines += linesCleared;
+        Store.level = Math.floor(Store.lines / 10) + 1;
+        
+        // THE NUKE (Misery #9)
+        if(Store.activeCurse === "NUKE") {
+            Store.shakeStrength = 50; 
+            Store.chromaticVal = 0.05; 
+            AudioSys.playCurse(); 
+        } else {
+            Store.shakeStrength = 20 + (linesCleared * 5); 
+            Store.chromaticVal = 0.02; 
+            AudioSys.playClear();
+        }
+        
+        if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
+        renderer.spawnFloatingText(`+${points}`, screenX, screenY - 50, 0x39FF14);
+        updateUI();
+    } 
+
+    Store.activePiece = createPiece();
+    if (checkCollision(Store.activePiece.x, Store.activePiece.y, Store.activePiece.shape)) {
+        triggerGameOver();
+    }
+}
+
+/*/* --- MODIFIED HAZARD MANAGER (HYPER SPEED) --- */
+class HazardManager {
+    constructor() {
+        this.nextCurseTime = 2; // First curse happens immediately
+        this.catTimer = 0; 
+    }
+
+    update(time) {
+        if(Store.gameOver) return;
+        const seconds = Math.floor((Date.now() - Store.startTime) / 1000);
+        
+        // Threat level rises 5x faster
+        Store.hazardLevel = Math.min(100, Math.floor(seconds * 5)); 
+
+        // TRIGGERS EVERY 3 TO 6 SECONDS (Originally 12-20s)
+        if (seconds > this.nextCurseTime) {
+            this.triggerRandomCurse();
+            this.nextCurseTime = seconds + 3 + Math.random() * 3; 
+        }
+
+        if (Store.activeCurse && Date.now() > Store.curseTimer) {
+            logEvent(`CURSE LIFTED: ${Store.activeCurse}`);
+            Store.activeCurse = null;
+            document.getElementById('panel-left').classList.remove('cursed-mode');
+            document.getElementById('mob-alert').style.display = "none";
+            document.getElementById('active-curse-text').innerText = "NO ANOMALIES";
+            document.getElementById('active-curse-text').style.color = "var(--toxic-green)";
+        }
+
+        // KEYBOARD CAT (Hyper Mode: Every 0.3s instead of 0.8s)
+        if (Store.activeCurse === "CAT") {
+            if(Date.now() > this.catTimer) {
+                const moves = [-1, 1, 0];
+                const r = moves[Math.floor(Math.random()*moves.length)];
+                if(r !== 0) executeMove(r);
+                else rotate(Store.activePiece);
+                this.catTimer = Date.now() + 300; 
+            }
+        }
+    }
+
+    triggerRandomCurse() {
+        // Durations reduced to 3000ms - 5000ms (Rapid Fire)
+        const curses = [
+            { id: "SPEED", name: "ADRENALINE", dur: 5000, msg: "MAX SPEED" },       
+            { id: "AUSTRALIA", name: "AUSTRALIA", dur: 5000, msg: "UPSIDE DOWN" },  
+            { id: "MOSH", name: "MOSH PIT", dur: 4000, msg: "EPILEPSY WARNING" },    
+            { id: "TROLL", name: "IDENTITY", dur: 4000, msg: "WHAT IS THAT?" },      
+            { id: "GASLIGHT", name: "GASLIGHT", dur: 6000, msg: "COLOR SWAP" },     
+            { id: "ZOOM", name: "ZOOMIES", dur: 3000, msg: "PERSONAL SPACE" },       
+            { id: "SLIPPERY", name: "ICE FLOOR", dur: 5000, msg: "WATCH YOUR STEP" }, 
+            { id: "CAT", name: "GHOST INPUT", dur: 4000, msg: "WHO PRESSED THAT?" }, 
+            { id: "NUKE", name: "NUCLEAR", dur: 4000, msg: "LOUD NOISES" },         
+            { id: "LAG", name: "PING 999", dur: 5000, msg: "BAD CONNECTION" },      
+            { id: "GHOST", name: "INVISIBLE", dur: 4000, msg: "WHERE AM I?" },       
+            { id: "GPU_DIE", name: "GPU DYING", dur: 4000, msg: "VISUAL SMEARING" }  
+        ];
+
+        const curse = curses[Math.floor(Math.random() * curses.length)];
+        
+        Store.activeCurse = curse.id;
+        Store.curseTimer = Date.now() + curse.dur;
+        AudioSys.playCurse();
+        
+        logEvent(`!!! CURSE: ${curse.name} !!!`, true);
+        
+        const dText = document.getElementById('active-curse-text');
+        dText.innerText = curse.msg;
+        dText.style.color = "var(--crimson-alert)";
+        document.getElementById('panel-left').classList.add('cursed-mode');
+        
+        const mText = document.getElementById('mob-alert');
+        mText.innerText = `⚠ ${curse.name} ⚠`;
+        mText.style.display = "block";
+
+        const flash = document.getElementById('curse-flash');
+        flash.innerText = curse.msg;
+        flash.classList.remove('flash-anim');
+        void flash.offsetWidth; 
+        flash.classList.add('flash-anim');
+    }
+}
+const Hazards = new HazardManager();
+
+/* --- CORE LOOP --- */
+let dropCounter = 0;
+let lastTime = 0;
+let renderer;
+
+function update(time) {
+    if (Store.gameOver) return;
+    const deltaTime = time - lastTime;
+    lastTime = time;
+
+    Hazards.update(time);
+
+    // ADRENALINE (Misery #1)
+    let gravity = Math.max(25, 400 - (Store.level * 40)); 
+    const pulse = (Math.sin(time / 800) + 1.5); 
+    if (Store.activeCurse === "SPEED") gravity = 50; 
+    else gravity = gravity / pulse;
+
+    dropCounter += deltaTime;
+    if (dropCounter > gravity) {
+        Store.activePiece.y++;
+        if (checkCollision(Store.activePiece.x, Store.activePiece.y, Store.activePiece.shape)) {
+            Store.activePiece.y--;
+            mergePiece();
+        }
+        dropCounter = 0;
+    }
+    renderer.render(deltaTime);
+    requestAnimationFrame(update);
+}
+
+/* --- CONTROLS --- */
+function executeMove(dir) {
+    if (Store.gameOver || !Store.activePiece) return;
+    if (!checkCollision(Store.activePiece.x + dir, Store.activePiece.y, Store.activePiece.shape)) {
+        Store.activePiece.x += dir;
+        AudioSys.playMove();
+    }
+}
+
+// PING 999 (Misery #10) - Input Delay Wrapper
+function move(dir) {
+    if(Store.activeCurse === 'LAG') {
+        setTimeout(() => executeMove(dir), 800); // 400ms delay
+    } else {
+        executeMove(dir);
+    }
+}
+
+function drop() {
+    if (Store.gameOver || !Store.activePiece) return;
+    if(Store.activeCurse === 'LAG') {
+        setTimeout(() => performDrop(), 400);
+    } else {
+        performDrop();
+    }
+}
+
+function performDrop() {
+    let dropped = false;
+    while (!checkCollision(Store.activePiece.x, Store.activePiece.y + 1, Store.activePiece.shape)) {
+        Store.activePiece.y++;
+        dropped = true;
+    }
+    if(dropped) mergePiece();
+}
+
+function performRotate() {
+    if(Store.activeCurse === 'LAG') {
+        setTimeout(() => rotate(Store.activePiece), 400);
+    } else {
+        rotate(Store.activePiece);
+    }
+}
+
+window.addEventListener('keydown', (e) => {
+    if(e.keyCode === 37) move(-1);
+    else if(e.keyCode === 39) move(1);
+    else if(e.keyCode === 40) { 
+        // Manual drop also lags
+        if(Store.activeCurse === 'LAG') setTimeout(() => { if (!checkCollision(Store.activePiece.x, Store.activePiece.y + 1, Store.activePiece.shape)) Store.activePiece.y++; }, 400);
+        else if (!checkCollision(Store.activePiece.x, Store.activePiece.y + 1, Store.activePiece.shape)) Store.activePiece.y++;
+    }
+    else if(e.keyCode === 38) performRotate();
+    else if(e.keyCode === 32) drop();
+});
+
+function attachTouch(id, action) {
+    const el = document.getElementById(id);
+    el.addEventListener('touchstart', (e) => { e.preventDefault(); action(); }, {passive: false});
+}
+attachTouch('btn-left', () => move(-1));
+attachTouch('btn-right', () => move(1));
+attachTouch('btn-rotate', () => performRotate());
+attachTouch('btn-drop', () => drop());
+
+/* --- UI HELPERS --- */
+function logEvent(msg, isWarn = false) {
+    const term = document.getElementById('log-terminal');
+    const p = document.createElement('div');
+    p.className = 'log-entry' + (isWarn ? ' log-warn' : '');
+    p.innerText = `> ${msg}`;
+    term.prepend(p);
+    if(term.children.length > 10) term.lastChild.remove();
+}
+
+function updateUI() {
+    document.getElementById('score-val').innerText = Store.score;
+    document.getElementById('lines-val').innerText = Store.lines;
+    document.getElementById('level-val').innerText = Store.level;
+    document.getElementById('threat-val').innerText = Store.hazardLevel + "%";
+    document.getElementById('threat-fill').style.width = Store.hazardLevel + "%";
+    // Mobile Score Update
+    document.getElementById('mob-score').innerText = Store.score;
+}
+
+/* --- INSULT DATABASE --- */
+const DEATH_QUOTES = [
+    "PATHETIC.",
+    "GRAVITY: 1. YOU: 0.",
+    "MY GPU HAS BETTER REFLEXES.",
+    "404: SKILL NOT FOUND.",
+    "HAVE YOU TRIED OPENING YOUR EYES?",
+    "THE VOID IS UNIMPRESSED.",
+    "INPUT LAG? NO, THAT WAS JUST YOU.",
+    "ENTROPY WINS AGAIN.",
+    "MAYBE TRY TIC-TAC-TOE INSTEAD?",
+    "NO SYSTEM FAILURE. USER FAILURE.",
+    "EVEN THE TETROMINOES HATE YOU.",
+    "I'VE SEEN BETTER GAMEPLAY FROM A TOASTER."
+];
+const ZeroScoreInsult = ["LITERALLY ZERO? HOW?", "404: SKILL NOT FOUND."," DID YOU EVEN TRY?","my grandma plays better.","MAYBE TRY TIC-TAC-TOE INSTEAD?",];
+
+function triggerGameOver() {
+    Store.gameOver = true;
+    document.getElementById('game-over-screen').classList.remove('hidden');
+    document.getElementById('final-score').innerText = Store.score;
+    
+    // Select the insult
+    let msg = "";
+    if (Store.score === 0) {
+        // Special insult for 0 points
+        msg = ZeroScoreInsult[Math.floor(Math.random() * ZeroScoreInsult.length)];
+    } else if (Store.score > 10000) {
+        // Grudging respect for high score
+        msg = DEATH_QUOTES[Math.floor(Math.random() * DEATH_QUOTES.length)];
+    } else {
+        // Random abuse
+        msg = DEATH_QUOTES[Math.floor(Math.random() * DEATH_QUOTES.length)];
+    }
+
+    document.getElementById('death-insult').innerText = `"${msg}"`;
+    document.getElementById('mobile-controls').style.display = 'none';
+}
+
+window.shareScore = function() {
+    const btn = document.querySelector('.btn-share');
+    const originalContent = btn.innerHTML;
+
+    // 1. VISUAL FEEDBACK
+    btn.innerHTML = "CAPTURING EVIDENCE...";
+    btn.style.background = "var(--toxic-green)";
+    btn.style.color = "black";
+
+    // 2. CAPTURE CANVAS
+    // We force a render to make sure the glitches are caught in the act
+    renderer.app.render();
+    
+    // Convert the WebGL canvas to a PNG data URL
+    const image = renderer.app.view.toDataURL("image/png");
+
+    // 3. FORCE DOWNLOAD
+    const link = document.createElement('a');
+    link.download = `VOID_TETRIS_FAIL_${Store.score}_${Date.now()}.png`;
+    link.href = image;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // 4. OPEN TWITTER AFTER DELAY
+    setTimeout(() => {
+        btn.innerHTML = "OPENING COMMS...";
+        
+        const text = `I lasted ${Math.floor((Date.now() - Store.startTime)/1000)}s in VOID TETRIS (Chaos Mode). My GPU is crying. Score: ${Store.score}.`;
+        const url = "https://void-tetris-entity.vercel.app"; // Replace with your actual URL
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        
+        // Open Twitter
+        window.open(twitterUrl, '_blank');
+
+        // Reset Button
+        setTimeout(() => {
+            btn.innerHTML = originalContent;
+            btn.style.background = "#fff";
+            btn.style.color = "#000";
+        }, 2000);
+    }, 1000);
+}
+
+window.startGame = function() {
+    document.getElementById('start-screen').classList.add('hidden');
+    // Add this inside window.startGame = function() { ...
+// Right after AudioSys.ctx.resume();
+
+const ambient = AudioSys.ctx.createOscillator();
+const ambGain = AudioSys.ctx.createGain();
+ambient.type = 'sawtooth';
+ambient.frequency.value = 100; // Low drone
+ambGain.gain.value = 0.15; // Very quiet
+// Add a filter to make it muffled and scary
+const filter = AudioSys.ctx.createBiquadFilter();
+filter.type = "lowpass";
+filter.frequency.value = 120;
+
+ambient.connect(filter);
+filter.connect(ambGain);
+ambGain.connect(AudioSys.masterGain);
+ambient.start();
+    // Ensure mobile hud is ready
+    if(window.innerWidth <= 900) {
+        document.getElementById('mobile-controls').style.display = 'flex';
+    }
+    Store.reset();
+    Store.activePiece = createPiece();
+    if(AudioSys.ctx.state === 'suspended') AudioSys.ctx.resume();
+    if(!renderer) renderer = new VoidRenderer();
+    requestAnimationFrame(update);
+};
+</script>
 </body>
 </html>
