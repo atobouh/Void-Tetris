@@ -226,90 +226,24 @@
         }
         .log-warn { color: var(--crimson-alert); background: rgba(255,0,0,0.1); }
 
-        /* --- CONTROLS (ONE-HAND LAYOUT) --- */
-        #mobile-controls {
-            display: none;
+        /* --- INVISIBLE TOUCH LAYER --- */
+        #touch-layer {
             position: fixed;
-            bottom: 0;
-            width: 100%;
-            height: 250px;
-            z-index: 1000;
-            pointer-events: all;
-            padding: 20px;
-            box-sizing: border-box;
-            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-        }
-
-        #mobile-controls.left-handed {
+            top: 0;
             left: 0;
-            right: auto;
+            width: 100%;
+            height: 100%;
+            z-index: 500;
+            touch-action: none;
+            pointer-events: all;
         }
 
-        #mobile-controls.right-handed {
-            right: 0;
-            left: auto;
+        @media (min-width: 901px) {
+            #touch-layer {
+                display: none;
+                pointer-events: none;
+            }
         }
-
-        #side-toggle {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 50px;
-            background: rgba(255,255,255,0.1);
-            border: 2px solid var(--cyber-blue);
-            border-radius: 50%;
-            color: var(--cyber-blue);
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s;
-            touch-action: manipulation;
-        }
-        #side-toggle:active {
-            background: var(--cyber-blue);
-            color: black;
-            transform: translateX(-50%) scale(0.9);
-        }
-
-        .control-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            position: absolute;
-            bottom: 20px;
-            width: 180px;
-        }
-
-        #mobile-controls.right-handed .control-group {
-            right: 20px;
-        }
-
-        #mobile-controls.left-handed .control-group {
-            left: 20px;
-        }
-
-        .mob-btn {
-            width: 60px;
-            height: 60px;
-            background: rgba(255,255,255,0.08);
-            border: 2px solid var(--toxic-green);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 22px;
-            color: var(--toxic-green);
-            backdrop-filter: blur(4px);
-            touch-action: manipulation;
-            transition: all 0.1s;
-        }
-        .mob-btn:active { background: var(--toxic-green); color: black; transform: scale(0.85); }
-        .btn-big { width: 70px; height: 70px; border-color: var(--crimson-alert); color: var(--crimson-alert); font-size: 28px; }
-        .btn-big:active { background: var(--crimson-alert); }
 
         /* --- SCREENS --- */
         #start-screen, #game-over-screen {
@@ -362,7 +296,6 @@
         @media (max-width: 900px) {
             .ui-layer { display: none; } /* Hide desktop UI */
             #mobile-hud-bar { display: flex; } /* Show mobile top bar */
-            #mobile-controls { display: flex; }
             #start-screen h1 { font-size: 3rem; }
             #curse-flash { font-size: 2.5rem; width: 90%; }
         }
@@ -400,15 +333,8 @@
         </div>
     </div>
 
-    <div id="mobile-controls" class="right-handed">
-        <div id="side-toggle" title="Switch hand (Left/Right)">⇄</div>
-        <div class="control-group">
-            <div class="mob-btn" id="btn-left">←</div>
-            <div class="mob-btn" id="btn-right">→</div>
-            <div class="mob-btn" id="btn-rotate">↻</div>
-            <div class="mob-btn btn-big" id="btn-drop">↓</div>
-        </div>
-    </div>
+    <div id="touch-layer"></div>
+
     <div id="start-screen">
     <h1 class="glitch-text" style="font-family: 'Orbitron'; font-size: 4rem; text-align:center; color: #fff; margin-bottom: 0;">VOID TETRIS</h1>
     
@@ -1122,37 +1048,86 @@ window.addEventListener('keydown', (e) => {
     else if(e.keyCode === 32) drop();
 });
 
-function attachTouch(id, action) {
-    const el = document.getElementById(id);
-    el.addEventListener('touchstart', (e) => { e.preventDefault(); action(); }, {passive: false});
-}
-attachTouch('btn-left', () => move(-1));
-attachTouch('btn-right', () => move(1));
-attachTouch('btn-rotate', () => performRotate());
-attachTouch('btn-drop', () => drop());
-
-/* --- HAND PREFERENCE TOGGLE --- */
-document.getElementById('side-toggle').addEventListener('click', () => {
-    const controls = document.getElementById('mobile-controls');
-    const isRightHanded = controls.classList.contains('right-handed');
-    
-    if(isRightHanded) {
-        controls.classList.remove('right-handed');
-        controls.classList.add('left-handed');
-        localStorage.setItem('tetris-hand', 'left');
-    } else {
-        controls.classList.remove('left-handed');
-        controls.classList.add('right-handed');
-        localStorage.setItem('tetris-hand', 'right');
+/* --- INVISIBLE TOUCH LAYER GESTURE DETECTION --- */
+class TouchGestureHandler {
+    constructor() {
+        this.touchStartX = 0;
+        this.touchStartY = 0;
+        this.touchStartTime = 0;
+        this.minSwipeDistance = 50;
+        this.maxTapDistance = 30;
+        this.maxTapDuration = 250;
     }
-});
+
+    init() {
+        const layer = document.getElementById('touch-layer');
+        layer.addEventListener('touchstart', (e) => this.handleTouchStart(e), {passive: false});
+        layer.addEventListener('touchend', (e) => this.handleTouchEnd(e), {passive: false});
+    }
+
+    handleTouchStart(e) {
+        if (e.touches.length !== 1) return; // Only single touch
+        e.preventDefault();
+        
+        const touch = e.touches[0];
+        this.touchStartX = touch.clientX;
+        this.touchStartY = touch.clientY;
+        this.touchStartTime = Date.now();
+    }
+
+    handleTouchEnd(e) {
+        if (e.changedTouches.length !== 1) return;
+        e.preventDefault();
+
+        const touch = e.changedTouches[0];
+        const endX = touch.clientX;
+        const endY = touch.clientY;
+        const duration = Date.now() - this.touchStartTime;
+
+        const deltaX = endX - this.touchStartX;
+        const deltaY = endY - this.touchStartY;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        // SWIPE DETECTION (Must be > minSwipeDistance)
+        if (distance > this.minSwipeDistance) {
+            const angle = Math.atan2(deltaY, deltaX);
+            
+            // UP SWIPE (Rotate)
+            if (deltaY < -this.minSwipeDistance && Math.abs(deltaX) < this.minSwipeDistance) {
+                performRotate();
+                return;
+            }
+            
+            // DOWN SWIPE (Hard Drop)
+            if (deltaY > this.minSwipeDistance && Math.abs(deltaX) < this.minSwipeDistance) {
+                drop();
+                return;
+            }
+        }
+
+        // TAP DETECTION (Small distance, quick duration)
+        if (distance < this.maxTapDistance && duration < this.maxTapDuration) {
+            const screenWidth = window.innerWidth;
+            const tapX = this.touchStartX;
+
+            // TAP LEFT SIDE = Move Left
+            if (tapX < screenWidth * 0.5) {
+                move(-1);
+            }
+            // TAP RIGHT SIDE = Move Right
+            else {
+                move(1);
+            }
+        }
+    }
+}
+
+const gestureHandler = new TouchGestureHandler();
 
 // Load saved preference
 window.addEventListener('DOMContentLoaded', () => {
     const savedHand = localStorage.getItem('tetris-hand') || 'right';
-    const controls = document.getElementById('mobile-controls');
-    controls.classList.remove('left-handed', 'right-handed');
-    controls.classList.add(savedHand + '-handed');
+    // Touch layer doesn't need hand preference - it covers whole screen
 });
 
 /* --- UI HELPERS --- */
@@ -1211,7 +1186,6 @@ function triggerGameOver() {
     }
 
     document.getElementById('death-insult').innerText = `"${msg}"`;
-    document.getElementById('mobile-controls').style.display = 'none';
 }
 
 window.shareScore = function() {
@@ -1262,22 +1236,22 @@ window.startGame = function() {
     // 1. INITIALIZE AUDIO (This must happen inside the click!)
     AudioSys.init();
 
-    // 2. Hide Screen & Show Controls
+    // 2. Hide Start Screen
     document.getElementById('start-screen').classList.add('hidden');
+    
+    // 3. Initialize touch gesture handler on mobile
     if(window.innerWidth <= 900) {
-        document.getElementById('mobile-controls').style.display = 'flex';
-        // Default to Right Handed layout
-        document.getElementById('mobile-controls').classList.add('hand-right');
+        gestureHandler.init();
     }
 
-    // 3. Reset Game State
+    // 4. Reset Game State
     Store.reset();
     Store.activePiece = createPiece();
     
-    // 4. Start Renderer if not already running
+    // 5. Start Renderer if not already running
     if(!renderer) renderer = new VoidRenderer();
     
-    // 5. Start Loop
+    // 6. Start Loop
     requestAnimationFrame(update);
 };
 </script>
