@@ -1216,7 +1216,7 @@ window.shareScore = function() {
     setTimeout(() => {
         btn.innerHTML = "OPENING COMMS...";
         
-        const text = `I lasted ${Math.floor((Date.now() - Store.startTime)/1000)}s in VOID TETRIS (Chaos Mode). My GPU is crying. Score: ${Store.score}.`;
+        const text = `I lasted ${Math.floor((Date.now() - Store.startTime)/1000)}s in VOID TETRIS (Chaos Mode) by @DevKuns43926 . My GPU is crying. Score: ${Store.score}.`;
         const url = "https://void-tetris-entity.vercel.app"; // Replace with your actual URL
         const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
         
