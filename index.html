@@ -363,7 +363,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
             POST DISASTER
         </button>
-        <button class="btn-cyber" style="margin-top: 15px; font-size: 1.2rem; padding: 10px 30px;" onclick="location.reload()">REBOOT?</button>
+        <button class="btn-cyber" style="margin-top: 15px; font-size: 1.2rem; padding: 10px 30px;" onclick="restartGame()">REBOOT?</button>
     </div>
 </div>
 
@@ -1252,6 +1252,30 @@ window.startGame = function() {
     if(!renderer) renderer = new VoidRenderer();
     
     // 6. Start Loop
+    requestAnimationFrame(update);
+};
+
+window.restartGame = function() {
+    // INSTANT RESTART - no page reload needed
+    // 1. Hide game over screen
+    document.getElementById('game-over-screen').classList.add('hidden');
+    
+    // 2. Reset game state
+    Store.reset();
+    Store.activePiece = createPiece();
+    dropCounter = 0;
+    lastTime = 0;
+    Hazards.nextCurseTime = 2;
+    
+    // 3. Clear UI
+    document.getElementById('log-terminal').innerHTML = '';
+    document.getElementById('panel-left').classList.remove('cursed-mode');
+    document.getElementById('mob-alert').style.display = "none";
+    document.getElementById('active-curse-text').innerText = "NO ANOMALIES";
+    document.getElementById('active-curse-text').style.color = "var(--toxic-green)";
+    updateUI();
+    
+    // 4. Resume game loop
     requestAnimationFrame(update);
 };
 </script>
