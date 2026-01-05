@@ -430,7 +430,7 @@
     <div id="game-over-screen" class="hidden">
         <h1 style="font-family: 'Orbitron'; color: var(--crimson-alert); font-size: 3rem;">YOU DIED</h1>
         <div style="font-family: 'Courier New'; text-align: left; background: #080808; padding: 20px; border: 1px solid #333; margin-bottom: 20px;">
-            <p style="color: var(--plague-purple)" id="death-insult">"PATHETIC."</p>
+            <p style="color: #FF003F; font-size: 1.5rem; font-weight: bold;" id="death-insult">"PATHETIC."</p>
             <p>> SCORE: <span id="final-score" style="color:white">0</span></p>
         </div>
         <button class="btn-share" onclick="shareScore()">
@@ -457,16 +457,61 @@ const COLORS = [
     0xFFFFFF  // Z
 ];
 
-/* --- SOUND ENGINE --- */
+/* --- ROBUST SOUND ENGINE --- */
 class SoundEngine {
     constructor() {
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        this.masterGain = this.ctx.createGain();
-        this.masterGain.gain.value = 0.3;
-        this.masterGain.connect(this.ctx.destination);
+        this.ctx = null;
+        this.masterGain = null;
+        this.ambientOsc = null;
     }
+
+    init() {
+        // Only create the context when the user clicks "INITIATE"
+        if (!this.ctx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
+            
+            this.masterGain = this.ctx.createGain();
+            this.masterGain.gain.value = 0.5; // Main volume
+            this.masterGain.connect(this.ctx.destination);
+            
+            // Start the drone immediately after creation
+            this.startAmbience();
+        } else if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    }
+
+    startAmbience() {
+        if (this.ambientOsc) return; // Don't start twice
+
+        // The "Horror Hum"
+        this.ambientOsc = this.ctx.createOscillator();
+        const ambGain = this.ctx.createGain();
+        
+        // 1. USE 'SAWTOOTH' (Easier for phones to reproduce than Sine)
+        this.ambientOsc.type = 'sawtooth';
+        // 2. USE 110Hz (Deep, but audible on tiny speakers)
+        this.ambientOsc.frequency.value = 110; 
+        
+        // 3. LOW PASS FILTER (Muffles it so it sounds like it's coming from inside a wall)
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 250;
+
+        // 4. VOLUME
+        ambGain.gain.value = 0.2; // Loud enough to hear, quiet enough to ignore
+
+        // Connect the chain: Oscillator -> Filter -> Gain -> Master
+        this.ambientOsc.connect(filter);
+        filter.connect(ambGain);
+        ambGain.connect(this.masterGain);
+        
+        this.ambientOsc.start();
+    }
+
     playTone(freq, type, duration, slideTo = null, vol = 0.5) {
-        if(this.ctx.state === 'suspended') this.ctx.resume();
+        if (!this.ctx) return; // Safety check
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = type;
@@ -479,6 +524,8 @@ class SoundEngine {
         osc.start();
         osc.stop(this.ctx.currentTime + duration);
     }
+
+    // Sound Presets
     playMove() { this.playTone(300, 'square', 0.05, 200, 0.3); }
     playRotate() { this.playTone(600, 'sine', 0.1, null, 0.3); }
     playHardDrop() { this.playTone(100, 'sawtooth', 0.3, 10, 0.6); }
@@ -487,7 +534,6 @@ class SoundEngine {
         setTimeout(() => this.playTone(600, 'square', 0.2, 1200), 100);
     }
     playCurse() { this.playTone(800, 'sawtooth', 1.0, 50, 0.8); }
-    playError() { this.playTone(150, 'sawtooth', 0.5, 100, 0.8); } // For lag/error
 }
 const AudioSys = new SoundEngine();
 
@@ -542,8 +588,8 @@ class VoidRenderer {
             width: window.innerWidth,
             height: window.innerHeight,
             backgroundColor: 0x050505,
-            antialias: true,
-            resolution: window.devicePixelRatio || 1,
+            antialias: false, // TURN OFF ANTIALIAS (Faster)
+            resolution: 1,    // FORCE 1 (Prevents 4k rendering on phones)
             autoDensity: true
         });
         document.querySelector('#game-container').appendChild(this.app.view);
@@ -677,7 +723,10 @@ class VoidRenderer {
         } else {
             this.screenFilter.uniforms.rgbSplit = 0.001; 
         }
-        this.screenFilter.uniforms.time = timeVal;
+        // Only update shader every other frame to save GPU
+if (Math.floor(timeVal * 60) % 2 === 0) {
+    this.screenFilter.uniforms.time = timeVal;
+}
 
         // GPU DYING (Misery #12): Smearing Effect
         if(Store.activeCurse !== "GPU_DIE") {
@@ -713,17 +762,37 @@ class VoidRenderer {
             this.drawBlockShape(Store.activePiece.x, Store.activePiece.y, Store.activePiece.shape, Store.activePiece.color, pieceAlpha, false, timeVal);
         }
 
-        // Particles
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-            const p = this.particles[i];
-            p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.life -= 0.05; p.alpha = p.life;
-            if(p.life <= 0) { this.particleContainer.removeChild(p); this.particles.splice(i, 1); }
-        }
-        for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
-            const t = this.floatingTexts[i];
-            t.y -= 2; t.life -= 0.02; t.alpha = t.life;
-            if(t.life <= 0) { this.uiContainer.removeChild(t); this.floatingTexts.splice(i, 1); }
-        }
+  // Updated Particle Loop
+for (let i = this.particles.length - 1; i >= 0; i--) {
+    const p = this.particles[i];
+    p.x += p.vx; 
+    p.y += p.vy; 
+    p.vy += 0.5; 
+    p.life -= 0.05; 
+    p.alpha = p.life;
+    
+    if(p.life <= 0) { 
+        this.particleContainer.removeChild(p); 
+        // CRITICAL: DESTROY IT TO FREE RAM
+        p.destroy(); 
+        this.particles.splice(i, 1); 
+    }
+}
+
+// Updated Text Loop
+for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+    const t = this.floatingTexts[i];
+    t.y -= 2; 
+    t.life -= 0.02; 
+    t.alpha = t.life;
+    
+    if(t.life <= 0) { 
+        this.uiContainer.removeChild(t); 
+        // CRITICAL: DESTROY IT
+        t.destroy(); 
+        this.floatingTexts.splice(i, 1); 
+    }
+}
     }
 
     drawBlock(x, y, colorVal, alpha = 1, time=0) {
@@ -1190,32 +1259,25 @@ window.shareScore = function() {
 }
 
 window.startGame = function() {
+    // 1. INITIALIZE AUDIO (This must happen inside the click!)
+    AudioSys.init();
+
+    // 2. Hide Screen & Show Controls
     document.getElementById('start-screen').classList.add('hidden');
-    // Add this inside window.startGame = function() { ...
-// Right after AudioSys.ctx.resume();
-
-const ambient = AudioSys.ctx.createOscillator();
-const ambGain = AudioSys.ctx.createGain();
-ambient.type = 'sawtooth';
-ambient.frequency.value = 100; // Low drone
-ambGain.gain.value = 0.15; // Very quiet
-// Add a filter to make it muffled and scary
-const filter = AudioSys.ctx.createBiquadFilter();
-filter.type = "lowpass";
-filter.frequency.value = 120;
-
-ambient.connect(filter);
-filter.connect(ambGain);
-ambGain.connect(AudioSys.masterGain);
-ambient.start();
-    // Ensure mobile hud is ready
     if(window.innerWidth <= 900) {
         document.getElementById('mobile-controls').style.display = 'flex';
+        // Default to Right Handed layout
+        document.getElementById('mobile-controls').classList.add('hand-right');
     }
+
+    // 3. Reset Game State
     Store.reset();
     Store.activePiece = createPiece();
-    if(AudioSys.ctx.state === 'suspended') AudioSys.ctx.resume();
+    
+    // 4. Start Renderer if not already running
     if(!renderer) renderer = new VoidRenderer();
+    
+    // 5. Start Loop
     requestAnimationFrame(update);
 };
 </script>
